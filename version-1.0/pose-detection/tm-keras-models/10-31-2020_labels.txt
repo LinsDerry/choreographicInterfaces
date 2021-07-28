@@ -1,0 +1,7 @@
+0 neutral
+1 trackR
+2 selectR
+3 zmIn
+4 zmOut
+5 scrlUp
+6 scrlDn
