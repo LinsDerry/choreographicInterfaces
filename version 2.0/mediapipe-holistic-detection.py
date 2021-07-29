@@ -22,21 +22,21 @@ with mp_holistic.Holistic(
         start = time.time()
 
 
-        # Flip the image horizontally for a later selfie-view display
-        # Convert the BGR image to RGB.
+        # Flip input image horizontally (used later for feedback display)
+        # Convert image to RGB.
         image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
 
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
         image.flags.writeable = False
 
-        # Process the image and detect the holistic
+        # Process the image with the holistic detector
         results = holistic.process(image)
 
-        # Draw landmark annotation on the image.
+        # Draw landmark annotations on the image.
         image.flags.writeable = True
 
-        # Convert the image color back so it can be displayed
+        # Add color back to image for feedback display
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
 
@@ -51,8 +51,6 @@ with mp_holistic.Holistic(
             image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
         mp_drawing.draw_landmarks(
             image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
-
-
 
 
         end = time.time()
