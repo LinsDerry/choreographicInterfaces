@@ -9,6 +9,7 @@ echo "Python 3 should be installed before running script."
 conda create -n choreographic-interface
 echo "Created conda environment --> choreographic-interface"
 
+conda activate choreographic-interface
 conda install opencv
 pip3 install mediapipe
  
