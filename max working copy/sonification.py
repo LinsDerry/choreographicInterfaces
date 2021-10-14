@@ -1,12 +1,15 @@
 from pydub import AudioSegment
 from pydub.playback import play
+import threading
+import asyncio
+
   
 
-refreshSound = "audioFiles/poseSwitchSound.wav"
-selectSound = "audioFiles/poseSwitchSound.wav"
+refreshSound = "audioFiles/refresh.wav"
+selectSound = "audioFiles/select.wav"
 trackSound = "audioFiles/poseSwitchSound.wav"
-zoomInSound = None
-zoomOutSound = None
+zoomInSound = "audioFiles/zoomIn.wav"
+zoomOutSound = "audioFiles/zoomOut.wav"
 
 dictionary = {
     'refresh': refreshSound,
@@ -19,6 +22,7 @@ dictionary = {
 
 def playPoseSound(action: str):
     print('attempting to play sound')
+    #task = asyncio.create_task(playSound(action))
     if action is not None:
         try:
             sound = AudioSegment.from_wav(dictionary[action])
@@ -27,4 +31,12 @@ def playPoseSound(action: str):
                 print('playing ' + action + 'sound')
         except Exception as e:
             print(e)
-
+# async def playSound(action: str):
+#     if action is not None:
+#         try:
+#             sound = AudioSegment.from_wav(dictionary[action])
+#             if sound is not None:
+#                 play(sound)
+#                 print('playing ' + action + 'sound')
+#         except Exception as e:
+#             print(e)

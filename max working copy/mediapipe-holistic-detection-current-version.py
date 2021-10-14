@@ -10,7 +10,8 @@ import math
 import os
 import pose_module # RENAME
 import sonification
-
+import threading
+import _thread
 t0 = time.time()
 
 mp_drawing = mp.solutions.drawing_utils
@@ -43,6 +44,7 @@ print(f"Took {t1-t0} seconds for setup")
 action = 'neutral'
 verbosePrinting = False
 previousAction = 0
+actionCount = 0
 def lerp(v, d):
     return v[0] * (1 - d) + v[1] * d
 
@@ -161,7 +163,7 @@ with mp_holistic.Holistic(
         try:
             if (action=='refresh') and (pose_classification[action] == 10): #  Strong Confidence:
                 #pyautogui.PAUSE = 2
-                print('REFRESH')
+                #print('REFRESH')
                 pyautogui.hotkey('command', 'r') # refresh
                 #pyautogui.scroll(-5) #scroll down
                 #pyautogui.PAUSE = 0
@@ -283,10 +285,25 @@ with mp_holistic.Holistic(
         # Position feedback bottom right corner (nuudged (5, 33) to look just right on MacBook Air)
         capX = screenWidth - newCapWidth - 5
         capY = screenHeight - newCapHeight - 33
-        if action != previousAction:
+
+        #counter-based pose switch detector for denoising; untested
+        if action == previousAction:
+            actionCount += 1
             previousAction = action
-            sonification.playPoseSound(action)
-            print ('pose switched! to ' + action)
+            print (actionCount, action)
+            if actionCount == 3:
+                #(sonification.playPoseSound(action))
+                _thread.start_new_thread(sonification.playPoseSound,(action,))#starting a coroutine so that playing sound doesnt hold up execution
+                print ('pose switched! to ' + action)
+        else:
+            actionCount = 0
+            previousAction = action
+
+        #original working pose switch 
+        # if action != previousAction:
+        #     previousAction = action
+        #     sonification.playPoseSound(action)
+        #     print ('pose switched! to ' + action)
         
         cv2.putText(image, f'FPS: {int(fps)}', (20,120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2) # provide feedback on current FPS
         cv2.putText(image, f'{action}', (25,65), cv2.FONT_HERSHEY_TRIPLEX, 1.5, black, 2) # provide feedback on current pose
