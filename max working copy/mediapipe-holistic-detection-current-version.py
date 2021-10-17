@@ -12,6 +12,7 @@ import pose_module # RENAME
 import sonification
 import threading
 import _thread
+import random
 t0 = time.time()
 
 mp_drawing = mp.solutions.drawing_utils
@@ -292,6 +293,8 @@ with mp_holistic.Holistic(
             previousAction = action
             print (actionCount, action)
             if actionCount == 3:
+                sonification.sendOSCMessage(action, "bang")
+
                 #(sonification.playPoseSound(action))
                 _thread.start_new_thread(sonification.playPoseSound,(action,))#starting a coroutine so that playing sound doesnt hold up execution
                 print ('pose switched! to ' + action)
@@ -315,3 +318,4 @@ with mp_holistic.Holistic(
             break
 
 cap.release()
+
