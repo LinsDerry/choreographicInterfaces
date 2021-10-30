@@ -10,8 +10,8 @@ import math
 import os
 import pose_module # RENAME
 import sonification
-import threading
-import _thread
+import threading#I may have added this - if so feel free to remove
+import _thread#I may have added this - if so feel free to remove
 import random
 t0 = time.time()
 
@@ -46,6 +46,8 @@ action = 'neutral'
 verbosePrinting = False
 previousAction = 0
 actionCount = 0
+cursorX = 0
+prevCursorX = 0
 def lerp(v, d):
     return v[0] * (1 - d) + v[1] * d
 
@@ -154,6 +156,20 @@ with mp_holistic.Holistic(
 
             # Move cursor
             pyautogui.moveTo(x, y)
+            if x is not None:
+
+                cursorX = x
+                cursorAccel = abs(cursorX - prevCursorX)
+                prevCursorX = cursorX
+                #print (cursorAccel)
+                sonification.sendXAccelerationOSC(cursorAccel)
+                sonification.sendOSCMessage('track', x)
+                #cursorParam = str(cursorX) + ' ' + str(cursorAccel)
+
+
+            # if action == 'track':
+            #     print (x)
+            #     sonification.sendOSCMessage(action, x)
 
         except Exception as e:
             if verbosePrinting:
@@ -291,16 +307,27 @@ with mp_holistic.Holistic(
         if action == previousAction:
             actionCount += 1
             previousAction = action
-            print (actionCount, action)
-            if actionCount == 3:
-                sonification.sendOSCMessage(action, "bang")
-
-                #(sonification.playPoseSound(action))
-                _thread.start_new_thread(sonification.playPoseSound,(action,))#starting a coroutine so that playing sound doesnt hold up execution
+            if verbosePrinting:
+                print (actionCount, action)
+            if actionCount == 3 and action != 'track':
+                sonification.sendOSCMessage(action, '')
+                sonification.sendOSCMessage('changed', '')
+                #_thread.start_new_thread(sonification.playPoseSound,(action,))#starting a coroutine so that playing sound doesnt hold up execution
                 print ('pose switched! to ' + action)
+            elif actionCount > 3:
+                if action == 'zoomOut':
+                    zoomOutTime += totalTime
+                    audioParam = zoomOutTime 
+                    sonification.sendOSCMessage(action, audioParam)
+                elif action == 'zoomIn':
+                    zoomInTime += totalTime
+                    audioParam = zoomInTime 
+                    sonification.sendOSCMessage(action, audioParam)
         else:
             actionCount = 0
             previousAction = action
+            zoomOutTime = 0
+            zoomInTime = 0
 
         #original working pose switch 
         # if action != previousAction:
