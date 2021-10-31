@@ -48,6 +48,11 @@ previousAction = 0
 actionCount = 0
 cursorX = 0
 prevCursorX = 0
+cursorY = 0
+prevCursorY = 0
+currentCoords = [0,0]
+lastCoords = [0,0]
+zoomLevel = 0
 def lerp(v, d):
     return v[0] * (1 - d) + v[1] * d
 
@@ -157,10 +162,15 @@ with mp_holistic.Holistic(
             # Move cursor
             pyautogui.moveTo(x, y)
             if x is not None:
+                currentCoords = [x, y]
+                cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
 
-                cursorX = x
-                cursorAccel = abs(cursorX - prevCursorX)
-                prevCursorX = cursorX
+                #cursorX = x
+                #cursorAccel = abs(cursorX - prevCursorX)
+                cursorAccel = cursorDifference
+                #prevCursorX = cursorX
+                #prevCursorY = cursorY
+                lastCoords = currentCoords
                 #print (cursorAccel)
                 sonification.sendXAccelerationOSC(cursorAccel)
                 sonification.sendOSCMessage('track', x)
@@ -316,18 +326,22 @@ with mp_holistic.Holistic(
                 print ('pose switched! to ' + action)
             elif actionCount > 3:
                 if action == 'zoomOut':
-                    zoomOutTime += totalTime
-                    audioParam = zoomOutTime 
+                    if zoomLevel < 10:
+                        zoomLevel += totalTime
+                        audioParam = zoomLevel 
                     sonification.sendOSCMessage(action, audioParam)
                 elif action == 'zoomIn':
-                    zoomInTime += totalTime
-                    audioParam = zoomInTime 
+                    if zoomLevel > -10:
+                        zoomLevel -= totalTime
+                        audioParam = zoomLevel 
                     sonification.sendOSCMessage(action, audioParam)
+                elif action == 'refresh':
+                    zoomLevel = 0
         else:
             actionCount = 0
             previousAction = action
-            zoomOutTime = 0
-            zoomInTime = 0
+            #zoomOutTime = 0
+            #zoomInTime = 0
 
         #original working pose switch 
         # if action != previousAction:
