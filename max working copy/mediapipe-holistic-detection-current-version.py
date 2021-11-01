@@ -41,18 +41,15 @@ cap = cv2.VideoCapture(0)
 
 t1 = time.time()
 print(f"Took {t1-t0} seconds for setup")
-
+## paste into main.py
 action = 'neutral'
 verbosePrinting = False
 previousAction = 0
 actionCount = 0
-cursorX = 0
-prevCursorX = 0
-cursorY = 0
-prevCursorY = 0
 currentCoords = [0,0]
 lastCoords = [0,0]
 zoomLevel = 0
+#paste into main.py
 def lerp(v, d):
     return v[0] * (1 - d) + v[1] * d
 
@@ -161,25 +158,18 @@ with mp_holistic.Holistic(
 
             # Move cursor
             pyautogui.moveTo(x, y)
+#paste into main.py
+            #this is for tracking cursor movement speed
             if x is not None:
                 currentCoords = [x, y]
                 cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
-
-                #cursorX = x
-                #cursorAccel = abs(cursorX - prevCursorX)
                 cursorAccel = cursorDifference
-                #prevCursorX = cursorX
-                #prevCursorY = cursorY
                 lastCoords = currentCoords
-                #print (cursorAccel)
                 sonification.sendXAccelerationOSC(cursorAccel)
                 sonification.sendOSCMessage('track', x)
-                #cursorParam = str(cursorX) + ' ' + str(cursorAccel)
+            #this is for tracking cursor movement speed
 
-
-            # if action == 'track':
-            #     print (x)
-            #     sonification.sendOSCMessage(action, x)
+#paste into main.py
 
         except Exception as e:
             if verbosePrinting:
@@ -313,7 +303,8 @@ with mp_holistic.Holistic(
         capX = screenWidth - newCapWidth - 5
         capY = screenHeight - newCapHeight - 33
 
-        #counter-based pose switch detector for denoising; untested
+#paste into main.py
+        #counter-based pose switch detector for denoising;
         if action == previousAction:
             actionCount += 1
             previousAction = action
@@ -322,7 +313,6 @@ with mp_holistic.Holistic(
             if actionCount == 3 and action != 'track':
                 sonification.sendOSCMessage(action, '')
                 sonification.sendOSCMessage('changed', '')
-                #_thread.start_new_thread(sonification.playPoseSound,(action,))#starting a coroutine so that playing sound doesnt hold up execution
                 print ('pose switched! to ' + action)
             elif actionCount > 3:
                 if action == 'zoomOut':
@@ -340,6 +330,10 @@ with mp_holistic.Holistic(
         else:
             actionCount = 0
             previousAction = action
+#paste into main.py
+
+
+
             #zoomOutTime = 0
             #zoomInTime = 0
 

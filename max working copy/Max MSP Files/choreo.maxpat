@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ -1768.0, 87.0, 1058.0, 959.0 ],
+		"rect" : [ 34.0, 87.0, 1058.0, 959.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -225,7 +225,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 1311.826830494605929, 762.96299934387207, 50.0, 22.0 ],
-					"text" : "481"
+					"text" : "3484"
 				}
 
 			}
@@ -371,26 +371,24 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-180",
-					"linecount" : 4,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 1361.363623380661011, 210.818182468414307, 29.5, 62.0 ],
-					"text" : "224.085083"
+					"patching_rect" : [ 1361.363623380661011, 210.818182468414307, 29.5, 22.0 ],
+					"text" : "0."
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"id" : "obj-178",
-					"linecount" : 4,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 1280.213201034271151, 225.0, 29.5, 62.0 ],
-					"text" : "827.448364"
+					"patching_rect" : [ 1280.213201034271151, 225.0, 29.5, 22.0 ],
+					"text" : "0."
 				}
 
 			}
@@ -437,7 +435,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 344.0, 309.0, 103.0, 22.0 ],
-					"text" : "scale 0 500 55 12"
+					"text" : "scale 0 500 45 12"
 				}
 
 			}
@@ -603,7 +601,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 878.613629460334778, 2070.830681992248628, 50.0, 22.0 ],
-					"text" : "0.64"
+					"text" : "0.6"
 				}
 
 			}
@@ -627,7 +625,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 916.613629460334778, 1937.830681992248628, 50.0, 22.0 ],
-					"text" : "0.6481"
+					"text" : "0.6085"
 				}
 
 			}
@@ -1635,7 +1633,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 371.052536010742188, 950.000063419342041, 50.0, 35.0 ],
-					"text" : "0.299984"
+					"text" : "0.173996"
 				}
 
 			}
@@ -1653,13 +1651,12 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-300",
-					"linecount" : 2,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 1190.395973563194275, 173.0, 50.0, 35.0 ],
-					"text" : "827.448364"
+					"patching_rect" : [ 1190.395973563194275, 173.0, 50.0, 22.0 ],
+					"text" : "0."
 				}
 
 			}
@@ -3744,132 +3741,6 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 520.536415459747332, 1099.263512992248479, 33.0, 22.0 ],
 					"text" : "64"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"id" : "obj-248",
-					"maxclass" : "newobj",
-					"numinlets" : 2,
-					"numoutlets" : 1,
-					"outlettype" : [ "multichannelsignal" ],
-					"patching_rect" : [ 136.046520709991455, 836.046567440032959, 68.0, 22.0 ],
-					"text" : "mc.stereo~"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"autosave" : 1,
-					"bgmode" : 1,
-					"border" : 0,
-					"clickthrough" : 0,
-					"enablehscroll" : 0,
-					"enablevscroll" : 0,
-					"id" : "obj-242",
-					"lockeddragscroll" : 0,
-					"maxclass" : "newobj",
-					"numinlets" : 3,
-					"numoutlets" : 4,
-					"offset" : [ 0.0, 0.0 ],
-					"outlettype" : [ "signal", "signal", "", "" ],
-					"patching_rect" : [ 1593.08150053024292, 1139.465167045593262, 275.0, 196.0 ],
-					"saved_attribute_attributes" : 					{
-						"valueof" : 						{
-							"parameter_invisible" : 1,
-							"parameter_longname" : "amxd~[2]",
-							"parameter_shortname" : "amxd~[2]",
-							"parameter_type" : 3
-						}
-
-					}
-,
-					"saved_object_attributes" : 					{
-						"parameter_enable" : 1,
-						"patchername" : "µKflux.amxd",
-						"patchername_fallback" : "~/Documents/Max 8/Packages/µK Bundle/patchers/Max Audio Effect/µKflux.amxd"
-					}
-,
-					"snapshot" : 					{
-						"filetype" : "C74Snapshot",
-						"version" : 2,
-						"minorversion" : 0,
-						"name" : "snapshotlist",
-						"origin" : "max~",
-						"type" : "list",
-						"subtype" : "Undefined",
-						"embed" : 1,
-						"snapshot" : 						{
-							"name" : "µKflux.amxd",
-							"origname" : "~/Documents/Max 8/Packages/µK Bundle/patchers/Max Audio Effect/µKflux.amxd",
-							"valuedictionary" : 							{
-								"parameter_values" : 								{
-									"Dry/Wet" : 0.0,
-									"Envelope" : 2.0,
-									"Jump" : 0.0,
-									"Length" : 100.0,
-									"Mode" : 1.0,
-									"Reverse" : 82.677165354330711,
-									"Shift" : 0.0,
-									"Silence" : 0.0,
-									"Time" : 431.833478231614549,
-									"Time Noise" : 59.842519685039385
-								}
-
-							}
-
-						}
-,
-						"snapshotlist" : 						{
-							"current_snapshot" : 0,
-							"entries" : [ 								{
-									"filetype" : "C74Snapshot",
-									"version" : 2,
-									"minorversion" : 0,
-									"name" : "µKflux.amxd",
-									"origin" : "µKflux.amxd",
-									"type" : "amxd",
-									"subtype" : "Undefined",
-									"embed" : 1,
-									"snapshot" : 									{
-										"name" : "µKflux.amxd",
-										"origname" : "~/Documents/Max 8/Packages/µK Bundle/patchers/Max Audio Effect/µKflux.amxd",
-										"valuedictionary" : 										{
-											"parameter_values" : 											{
-												"Dry/Wet" : 0.0,
-												"Envelope" : 2.0,
-												"Jump" : 0.0,
-												"Length" : 100.0,
-												"Mode" : 1.0,
-												"Reverse" : 82.677165354330711,
-												"Shift" : 0.0,
-												"Silence" : 0.0,
-												"Time" : 431.833478231614549,
-												"Time Noise" : 59.842519685039385
-											}
-
-										}
-
-									}
-,
-									"fileref" : 									{
-										"name" : "µKflux.amxd",
-										"filename" : "µKflux.amxd.maxsnap",
-										"filepath" : "/Volumes/Mac SSD/Users/andrewbenson/Documents/Max 7/Snapshots",
-										"filepos" : -1,
-										"snapshotfileid" : "40f24ca6b249c9234bc083d9bcb67fa3"
-									}
-
-								}
- ]
-						}
-
-					}
-,
-					"text" : "amxd~ µKflux.amxd",
-					"varname" : "amxd~[2]",
-					"viewvisibility" : 1
 				}
 
 			}
@@ -6580,16 +6451,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-242", 1 ],
-					"order" : 0,
-					"source" : [ "obj-134", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-242", 0 ],
-					"order" : 1,
+					"destination" : [ "obj-98", 0 ],
 					"source" : [ "obj-134", 0 ]
 				}
 
@@ -6982,20 +6844,6 @@
 				"patchline" : 				{
 					"destination" : [ "obj-10", 4 ],
 					"source" : [ "obj-24", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-98", 0 ],
-					"source" : [ "obj-242", 1 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-98", 0 ],
-					"source" : [ "obj-242", 0 ]
 				}
 
 			}
@@ -8011,7 +7859,6 @@
 			"obj-22" : [ "number[3]", "number[2]", 0 ],
 			"obj-23" : [ "number[2]", "number[2]", 0 ],
 			"obj-24" : [ "number[4]", "number[2]", 0 ],
-			"obj-242" : [ "amxd~[2]", "amxd~[2]", 0 ],
 			"obj-27" : [ "flonum", "flonum", 0 ],
 			"obj-282" : [ "panning", "panning", 0 ],
 			"obj-3" : [ "Glide", "Glide", 0 ],
@@ -8099,23 +7946,6 @@
 , 			{
 				"name" : "interfacecolor.js",
 				"bootpath" : "C74:/interfaces",
-				"type" : "TEXT",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "µKflux.amxd",
-				"bootpath" : "~/Documents/Max 8/Packages/µK Bundle/patchers/Max Audio Effect",
-				"patcherrelativepath" : "../../Packages/µK Bundle/patchers/Max Audio Effect",
-				"type" : "amxd",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "kfluxini_main 001.js",
-				"type" : "TEXT",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "kfluxini_display_001.js",
 				"type" : "TEXT",
 				"implicit" : 1
 			}
@@ -8243,9 +8073,11 @@
 , 			{
 				"name" : "Minimal",
 				"default" : 				{
+					"fontname" : [ "Futura Medium" ],
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"bgcolor" : [ 0.999999, 0.999974, 0.999991, 1.0 ],
-					"fontname" : [ "Futura Medium" ],
+					"color" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"fontface" : [ 0 ],
 					"bgfillcolor" : 					{
 						"type" : "color",
 						"color" : [ 0.65098, 0.666667, 0.662745, 1.0 ],
@@ -8257,11 +8089,9 @@
 					}
 ,
 					"selectioncolor" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"color" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontface" : [ 0 ],
 					"accentcolor" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"elementcolor" : [ 0.999999, 0.999974, 0.999991, 1.0 ],
-					"fontsize" : [ 10.0 ]
+					"fontsize" : [ 10.0 ],
+					"elementcolor" : [ 0.999999, 0.999974, 0.999991, 1.0 ]
 				}
 ,
 				"parentstyle" : "",
@@ -8272,6 +8102,7 @@
 				"default" : 				{
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"bgcolor" : [ 0.664464, 0.639616, 0.388173, 1.0 ],
+					"color" : [ 1.0, 1.0, 1.0, 1.0 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -8282,7 +8113,6 @@
 						"autogradient" : 0
 					}
 ,
-					"color" : [ 1.0, 1.0, 1.0, 1.0 ],
 					"accentcolor" : [ 0.741176, 0.356863, 0.047059, 1.0 ],
 					"fontsize" : [ 11.0 ]
 				}
