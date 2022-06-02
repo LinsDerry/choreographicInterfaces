@@ -6,6 +6,7 @@
 ###################################################################################
 
 ## Required Packages and Libraries ##
+from shutil import which
 import cv2
 import mediapipe as mp
 from mediapipe.python.solutions import pose as mp_pose
@@ -67,10 +68,7 @@ which_hand = 'right'
 mouse_down = False
 click = False
 reset_hand = False
-
-action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown', 'neutral', 'track'] # exclude track
-buffer = {key: 0 for key in action_list} # counts number of frames in a row a particular action has been registered. 
-
+max_distance_wrist_index = 0
 
 modalActionList = collections.deque(['neutral']* 10, maxlen=30) #initialize modal list with neutral
 modalAction = 'neutral'
@@ -90,9 +88,7 @@ lastCoords = [0,0]
 zoomLevel = 0
 cursorX = 0
 cursorY = 0
-trackingActive = False
 totalTime = .01
-
 
 class Vector2:
     def __init__(self,x,y):
@@ -329,16 +325,10 @@ with mp_holistic.Holistic(
                 elif (modalAction == 'scrollDown'):
                     pyautogui.scroll(-5)
                     # pyautogui.press('left') #Giulia
-                elif (modalAction == 'track' or modalAction == 'down'):
-                    trackingActive = True
+                #elif (modalAction == 'track' or modalAction == 'down'):
                     #sonification.sendOSCMessage('trackStart','')
-                if (modalAction != 'track'):
+                #if (modalAction != 'track'):
                     #sonification.sendOSCMessage(modalAction,'')
-                    trackingActive = False
-            else:
-                gesture_text = ''
-                if (trackingActive == True): 
-                    trackingActive = False
             #if lastExecutedAction != modalAction:
                 #print ('pose changed')
                 #print ('modal action is ' + modalAction)
@@ -350,6 +340,11 @@ with mp_holistic.Holistic(
 
         ##set handedness vars
         try:
+
+            # Vitruvian adjustment #
+            arm_length = distance_between_shoulders*2
+
+
             if which_hand == 'left':
                 wristX = x_wristL
                 wristY = y_wristL
@@ -357,6 +352,21 @@ with mp_holistic.Holistic(
                 thumbY = y_thumbL
                 indexX = x_indexL
                 indexY = y_indexL
+
+                # For vitruvian reach logic
+                shoulderX = x_shoulderL
+                shoulderY = y_shoulderL
+                max_reach_y = y_shoulderL+arm_length
+                min_reach_y = y_shoulderL+arm_length
+                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
+                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
+                else: # wrist is lower than shoulder
+                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
+                #reachY = y_shoulderL+arm_length
+                #reachX = x_shoulderL+arm_length
+                #print(f'Left Hand X Sign: {np.sign(wristX-shoulderX)}')
+                #print(f'Left Hand Y Sign: {np.sign(wristY-shoulderY)}')
+
             else:
                 wristX = x_wristR
                 wristY = y_wristR
@@ -364,10 +374,35 @@ with mp_holistic.Holistic(
                 thumbY = y_thumbR
                 indexX = x_indexR
                 indexY = y_indexR
+
+
+                # For vitruvian reach logic
+                shoulderX = x_shoulderR
+                shoulderY = y_shoulderR
+                max_reach_y = y_shoulderR+arm_length
+                min_reach_y = y_shoulderR+arm_length
+                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
+                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
+                else: # wrist is lower than shoulder
+                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
+                #reachY = y_shoulderR+arm_length
+                #reachX = x_shoulderR+arm_length
+                #print(f'Right Hand X Sign: {np.sign(wristX-shoulderX)}')
+                #print(f'Right Hand Y Sign: {np.sign(wristY-shoulderY)}')
+
+        except Exception as e:
+            #print(e)
+            pass
+
+        try:
+            # Vitruvian adjustment part 2 #
+            if np.abs(indexY-wristY)>max_distance_wrist_index:
+                max_distance_wrist_index = np.abs(indexY-wristY) # proxy for hand size, always take largest value found e.g. should get better over time and adjust to person
         except:
             pass
+        
         ##end set handedness vars
-        '''
+        
         if mode(modalMouseButtonList) == 'down':
             if mouse_down == False:
                 mouse_down = True
@@ -382,7 +417,7 @@ with mp_holistic.Holistic(
                 mouse_down = False
                 print('MOUSE UP!')
                 #sonification.sendMouseDown(mouse_down)
-        '''
+        
         try:
             if (mode(missingLandmarkBuffer) == False and modalAction == 'track'): # LET MOUSE GO ALWAYS
                 drag_threshold = distance_between_shoulders*0.2
@@ -397,14 +432,13 @@ with mp_holistic.Holistic(
                     if mouse_down == False:
                         # pyautogui.moveTo(wristX, wristY+y_disp) # Move cursor
                         cursorX = wristX
-                        cursorY = wristY
+                        cursorY = wristY+cursorbump_y
                 elif grab_distance < drag_threshold and modalAction == 'track':
-                    print('here')
                     modalMouseButtonList.append('down')
                     if mouse_down:
                         # pyautogui.moveTo(wristX, wristY+y_disp) # Move cursor, not drag to, because we are already holding the mouse down 
                         cursorX = wristX
-                        cursorY = wristY
+                        cursorY = wristY+cursorbump_y
                 if cursorX is not None and cursorX > 0:
                     currentCoords = [cursorX, cursorY]
                     cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
@@ -431,7 +465,7 @@ with mp_holistic.Holistic(
 
         ## Mouse Select ##
         try:
-            if trackingActive == True:
+            if modalAction == 'track':
                 select_threshold = distance_between_shoulders * 0.15
                 if which_hand == 'right':
                     select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
