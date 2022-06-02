@@ -21,6 +21,8 @@ import sys
 #import sonification #CI Sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
 import collections
 from statistics import mode
+
+
 ## Defining import objects for landmark tracking ##
 mp_holistic = mp.solutions.holistic # for holistic landmarks
 mp_drawing = mp.solutions.drawing_utils # for drawing landmark feedback
@@ -67,11 +69,10 @@ which_hand = 'right'
 mouse_down = False
 click = False
 reset_hand = False
-buffer_threshold = 5 # frames
-# action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown'] # exclude neutral and track
 action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown', 'neutral', 'track'] # exclude track
 buffer = {key: 0 for key in action_list} # counts number of frames in a row a particular action has been registered. 
-#modalActionList = ['neutral'] * 10 #initialize modal list with neutral
+
+## Modal Actions ##
 modalActionList = collections.deque(['neutral']* 10, maxlen=30) #initialize modal list with neutral
 modalAction = 'neutral'
 modalMouseButtonList = collections.deque(['up']* 10, maxlen=10) #initialize modal list with up
@@ -92,9 +93,7 @@ cursorX = 0
 cursorY = 0
 trackingActive = False
 totalTime = .01
-# x_wristL, x_thumbL, x_thumbTipL, x_indexL, x_pinkyL = 5 * 0
-# y_wristL, y_thumbL, y_thumbTipL, y_indexL, y_pinkyL = 5 * 0
-# leftLandmarkVars_x = [x_wristL, x_thumbL, x_thumbTipL, x_indexL, x_pinkyL]
+
 
 class Vector2:
     def __init__(self,x,y):
@@ -106,8 +105,6 @@ class Vector2:
         return Vector2(self.x * scalar, self.y * scalar)
     def __str__(self):
         return f"x:{self.x}, y:{self.y}"
-# v1 = Vector2(100, 100)
-# v2 = Vector2(200,200)
 
 
 def lerp(v1, v2, time): #time is value between 0 and 1
@@ -119,7 +116,7 @@ def GetRightHandXLandMarks(landmarkName, landmarkIndex):
                 landmarkName = results.left_hand_landmarks.landmark[landmarkIndex].x * screenWidth
             except Exception as e:
                 print(e)
-#end functions
+
 
 ########################
 ### HELPER FUNCTIONS ###
@@ -146,13 +143,13 @@ def determineHandedness(results):
     distance_between_shoulderR_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderR,y_shoulderR)))
     distance_between_shoulderL_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderL,y_shoulderL)))
     if (distance_between_shoulderL_faceCenter>distance_between_shoulderR_faceCenter) and (distance_between_shoulderR_faceCenter<(distance_between_shoulders*0.65)):
-        return 'left' # mirrored
+        which_hand = 'left' # mirrored
     elif (distance_between_shoulderL_faceCenter<distance_between_shoulderR_faceCenter) and (distance_between_shoulderL_faceCenter<(distance_between_shoulders*0.65)):
-        return 'right' # mirrored
+        which_hand = 'right' # mirrored
     
     return which_hand
 
-def executeAction(action,action_to_execute,zoomLevel):
+def executeAction(action,action_to_execute):
     if (action_to_execute == 'refresh' and lastExecutedAction != 'refresh'):
         pyautogui.hotkey('command', 'r')
         zoomLevel = 0 
@@ -209,9 +206,12 @@ def moveAndDragMouse(results,which_hand):
         indexY = results.left_hand_landmarks.landmark[8].y * screenHeight # --> Right Index Finger Tip (y-coor)
 
 
+
     if action == 'track':
+        
         handSpan = np.linalg.norm(np.array((pinkyX,pinkyY))-np.array((thumbTipX,thumbTipY)))
        
+                
         normalizedHandSpan = handSpan / distance_between_shoulders
         # print("handspan: " + str(normalizedHandSpan))
         if normalizedHandSpan < .2:
@@ -230,11 +230,11 @@ def moveAndDragMouse(results,which_hand):
             pyautogui.mouseUp()
             mouse_down = False
             #sonification.sendMouseDown(mouse_down)
-    try:
-
-        if (mode(missingLandmarkBuffer) == False and modalAction == 'track'): # LET MOUSE GO ALWAYS
             
+    try:
+        if (mode(missingLandmarkBuffer) == False and modalAction == 'track'): # LET MOUSE GO ALWAYS
             drag_threshold = distance_between_shoulders*0.2
+            
             # Mouse displacement y-axis correction
             # y_disp = indexY-wristY
             y_disp = 0
@@ -260,9 +260,9 @@ def moveAndDragMouse(results,which_hand):
                 if cursorAccel > 15:
                     v1 = Vector2(lastCoords[0], lastCoords[1])
                     v2 = Vector2(cursorX, cursorY)
-                    print ('v1 : '+v1)
-                    print ('v2 : '+v2)
-                    print(lerp(v1,v2,1))
+                    # print ('v1 : '+v1)
+                    # print ('v2 : '+v2)
+                    # print(lerp(v1,v2,1))
                     v3 = lerp(v1, v2, totalTime*.1)
                     pyautogui.moveTo(v3.x,v3.y, .1)
                     lastCoords = currentCoords
@@ -276,7 +276,7 @@ def moveAndDragMouse(results,which_hand):
 
 def zoomInCheck(results):
 
-    distance_between_shoulderR_wristR = np.linalg.norm(np.array((results.right_hand_landmarks.landmark[0].x*screenWidth,results.right_hand_landmarks.landmark[0].y*screenHeight))-np.array((results.pose_landmarks.landmark[12].x*screenWidth,results.pose_landmarks.landmark[12].y * screenHeight)))
+    distance_between_shoulderR_wristR = np.linalg.norm(np.array((results.right_hand_landmarks.landmark[0].x*screenWidth,results.right_hand_landmarks.landmark[0].y*screenHeight))-np.array(esults.pose_landmarks.landmark[12].x*screenWidth,esults.pose_landmarks.landmark[12].y * screenHeight)))
     distance_between_shoulderL_wristL = np.linalg.norm(np.array((results.left_hand_landmarks.landmark[0].x * screenWidth,results.left_hand_landmarks.landmark[0].y * screenHeight))-np.array((results.pose_landmarks.landmark[11].x * screenWidth,results.pose_landmarks.landmark[11].y * screenHeight)))
     if (action == 'zoomIn'):
         if (distance_between_shoulderR_wristR<(distance_between_shoulders*0.75)) and (distance_between_shoulderL_wristL<(distance_between_shoulders*0.75)):
@@ -365,8 +365,8 @@ with mp_holistic.Holistic(
             gesture_text = gesture_map_text[modalAction]
  
         ## EXECUTE Actions ##
-        if execute == True:
-            executeAction(action,action_to_execute,zoomLevel)
+        if execute = True:
+            executeAction(action,action_to_execute)
         else:
             gesture_text = ''
             if (trackingActive == True): 
@@ -388,7 +388,6 @@ with mp_holistic.Holistic(
         end = time.time()
         totalTime = end - start
         fps = 1 / totalTime
-        buffer_threshold = fps # Update buffer threshold
 
         ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
         rad = 4
