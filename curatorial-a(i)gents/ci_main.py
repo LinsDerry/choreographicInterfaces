@@ -1,15 +1,9 @@
+import CIModuleMOD as ci
+import cv2
+import pyautogui
+import time
 
-## Required Packages and Libraries ##
-# import statistics
-# from statistics import mode
-# from scipy.stats import mode
-## Defining import objects for landmark tracking ##
-mp_holistic = mp.solutions.holistic # for holistic landmarks
-mp_drawing = mp.solutions.drawing_utils # for drawing landmark feedback
-
-
-## Defining global variables - user feedback ##
-
+## VIZ STUFF TODO: put in module - make sure pose specific color is on
 # BGR code for mp_drawing
 lav = (178, 160, 187) 
 fuschia = (143, 18, 172)
@@ -21,283 +15,116 @@ redOrange = (58, 45, 240)
 midnight = (49, 26, 29)
 white = (255, 255, 255)
 black = (0, 0, 0)
-
 lmColor = lav #default landmark color
 connColor = lmColor #cdefault connector color
 gesture_text = ''
+lmColor_map = {'refresh':blue,'zoomIn':turquoise,'zoomOut':fuschia,'scrollUp':green,'scrollDown':maroon,'track':turquoise,'neutral':white}
+connColor_map = {'refresh':white,'zoomIn':fuschia,'zoomOut':turquoise,'scrollUp':maroon,'scrollDown':green,'track':lav,'neutral':blue}
+rad = 4
+thick = 3
 
 
-## audio variable declaration - TODO Max make sonification class or subclass in CI module
-currentCoords = [0,0]
-lastCoords = [0,0]
-zoomLevel = 0
-cursorX = 0
-cursorY = 0
-totalTime = .01
+settings = 'mac' # or lightbox
+if settings == 'mac':
+    settings = [5,150,4]
+elif settings == 'lightbox':
+    settings = [5,75,2.5] 
 
-class Vector2:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    def __add__(self, other):
-        return Vector2(self.x + other.x, self.y + other.y)
-    def __mul__(self, scalar):
-        return Vector2(self.x * scalar, self.y * scalar)
-    def __str__(self):
-        return f"x:{self.x}, y:{self.y}"
+selection = 'HAMS-LB'
 
-def lerp(v1, v2, time): #time is value between 0 and 1
-    return v1 * (1- time) + v2 * time
-def mode(buffer):
-    value = max(buffer, key = buffer.count)
-    return value
-import myfunction as mf
-## Main loop ##
+# no neutral
+set_maps = {'HAMS-LB':{1:'circle',2:'handsShoulders',3:'sideT',4:'hips',5:'Vdown',6:'track'}}
+classifiers = {'HAMS-LB':'031322_LogReg_pose_classifier.pkl'} 
+gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track'} # for set HAMS-LB
+gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK'} 
+action = 'track'
+
+# neutral
+#set_maps = {'HAMS-LB': {1:'neutral',2:'circle',3:'handsShoulders',4:'sideT',5:'hips',6:'Vdown',7:'track'}}
+#classifiers = {'HAMS-LB':'HAMS-LB_LogReg_pose_classifier.pkl'} # New set with universal 'track
+#gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track','neutral':'neutral'} # for set HAMS-LB
+#gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK','neutral':'NEUTRAL'} 
+action = 'neutral'
+
+# important stuff
+class_map = set_maps[str(selection)]
+pkl_filename = classifiers[str(selection)]
+
+
+lb_ci = ci.ChoreographicInterface()
+
+# inir classifier
+lb_ci.initPoseClasssifier(pkl_filename)
+
 cap = cv2.VideoCapture(0) # open web cam
-with mp_holistic.Holistic(
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5) as holistic:
-    while cap.isOpened():
-        
-        success, image = cap.read() # capture frame
-        start = time.time()
+while cap.isOpened():
 
-        
-        # process image, get holistic model
-        import ChoreographicInterface as CI
-        lbci = CI()
+    success, image = cap.read() # capture frame
+    screenWidth, screenHeight = pyautogui.size() # screen's height/width in pixels - scaling positions from input window
+    start = time.time() # FPS time keeping
 
-        lbci.findHolisticLandmarks(image)
+    # process image, get holistic model, update landmarks of interest
+    image = lb_ci.findHolisticLandmarks(image)
+    lb_ci.updateLandmarksOfInterest()
+    #print(lb_ci.landmarksOfInterest)
 
-        lbci.holisticLandmarks.landmakr
+    # classify pose - TODO: maybe keep extra constraint on zoomIn add if needed during testing
+    action = lb_ci.classifyPose(image,class_map,gesture_map)
+    lb_ci.logAction()
+    #print(lb_ci.modalAction[0][0])
+    try:
+        gesture_text = gesture_map_text[lb_ci.modalAction[0][0]]
+    except Exception as e:
+        pass
 
-    lbds = CI()
+    # execute action
+    executedAction = lb_ci.executeAction()
+    if executedAction != None:
+        print(executedAction)
 
-    lbds.add_util(csv,hotkey)
+    # update scale bar
+    lb_ci.updateScaleBar(screenWidth,screenHeight)
+    #print(lb_ci.scaleBar)
 
-    
+    # determine which hand to use - TODO change this so ear and face center are in the landmarks dictionary
+    lb_ci.determineHandedness(screenWidth,screenHeight)
+    print(lb_ci.whichHand)
 
-        # classify pose
+    # TODO prevent runaway buffer. list that gets very large.... e.g. if list bigger than look back start shedding one 
 
-        screenWidth, screenHeight = pyautogui.size() # screen's height/width in pixels - scaling positions from input window
+    # check click
+    try:
+        select_threshold, select_distance = lb_ci.mouseSelect()
+        #print(f"select_distance: {select_distance}")
+        #print(f"select_threshold: {select_threshold}")
+    except Exception as e:
+        pass
+ 
+    #print(lb_ci.clickBuffer)
 
-        # update scale bar
-            
-        
-        ## Collect specific landmarks of interest - dexterous movements (Using hand landmarks) ##        
-
-
-        ## Determine handedness (L vs. R) ##
-       
-
-        ## Establish additional constraint for zoomin ##
-        try:
-            distance_between_shoulderR_wristR = np.linalg.norm(np.array((x_wristL,y_wristL))-np.array((x_shoulderR,y_shoulderR)))
-            distance_between_shoulderL_wristL = np.linalg.norm(np.array((x_wristR,y_wristR))-np.array((x_shoulderL,y_shoulderL)))
-            if (action == 'zoomIn'):
-                if (distance_between_shoulderR_wristR<(distance_between_shoulders*0.75)) and (distance_between_shoulderL_wristL<(distance_between_shoulders*0.75)):
-                    pass 
-                else:
-                    action = 'track' # correct for unintended zoom in
-        except Exception as e:
-            pass
-
-
-        # check hand chop orientation
-        
-        
-        ## LOG Actions - modalAction ##
-        lmColor = lmColor_map[modalAction]
-        connColor = connColor_map[modalAction]
-        gesture_text = gesture_map_text[modalAction]
-        #for the text, when making track active always only set to track if nothing else
-
-
-        ## EXECUTE Actions ##
-        try:
-            '''
-            if modalAction == 'track':
-                if modalAction != lastExecutedAction:
-                    #sonification.sendOSCMessage('trackStart','')
-            else:
-                #sonification.sendOSCMessage(modalAction,'')
-            '''
-            #if lastExecutedAction != modalAction:
-                #print ('pose changed')
-                #print ('modal action is ' + modalAction)
-            lastExecutedAction = modalAction
-        except Exception as e:
-            pass
-    
-        ## Move and Drag Mouse ##
-
-        ##set handedness vars
-        try:
-
-            if which_hand == 'left':
-                wristX = x_wristL
-                wristY = y_wristL
-                thumbX = x_thumbL
-                thumbY = y_thumbL
-                indexX = x_indexL
-                indexY = y_indexL
-
-                # For vitruvian reach logic
-                shoulderX = x_shoulderL
-                shoulderY = y_shoulderL
-                max_reach_y = y_shoulderL+arm_length
-                min_reach_y = y_shoulderL+arm_length
-                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
-                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
-                else: # wrist is lower than shoulder
-                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
-                #reachY = y_shoulderL+arm_length
-                #reachX = x_shoulderL+arm_length
-                #print(f'Left Hand X Sign: {np.sign(wristX-shoulderX)}')
-                #print(f'Left Hand Y Sign: {np.sign(wristY-shoulderY)}')
-
-            else:
-                wristX = x_wristR
-                wristY = y_wristR
-                thumbX = x_thumbR
-                thumbY = y_thumbR
-                indexX = x_indexR
-                indexY = y_indexR
-
-
-                # For vitruvian reach logic
-                shoulderX = x_shoulderR
-                shoulderY = y_shoulderR
-                max_reach_y = y_shoulderR+arm_length
-                min_reach_y = y_shoulderR+arm_length
-                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
-                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
-                else: # wrist is lower than shoulder
-                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
-                #reachY = y_shoulderR+arm_length
-                #reachX = x_shoulderR+arm_length
-                #print(f'Right Hand X Sign: {np.sign(wristX-shoulderX)}')
-                #print(f'Right Hand Y Sign: {np.sign(wristY-shoulderY)}')
-
-        except Exception as e:
-            #print(e)
-            pass
-
-        try:
-            # Vitruvian adjustment part 2 #
-            if np.abs(indexY-wristY)>max_distance_wrist_index:
-                max_distance_wrist_index = np.abs(indexY-wristY) # proxy for hand size, always take largest value found e.g. should get better over time and adjust to person
-        except:
-            pass
-        
-        ##end set handedness vars
-        
-        if mode(modalMouseButtonList) == 'down':
-            if mouse_down == False:
-                mouse_down = True
-                pyautogui.mouseDown()
-                #print('MOUSE DOWN!')
-                gesture_text = 'DRAG'
-                #sonification.sendMouseDown(mouse_down)
-        else:
-            if mouse_down == True:
-                mouse_down = False
-                pyautogui.mouseUp()
-                mouse_down = False
-                #print('MOUSE UP!')
-                #sonification.sendMouseDown(mouse_down)
-        
-        try:
-            if (modalAction == 'track'): # LET MOUSE GO ALWAYS
-                drag_threshold = distance_between_shoulders*0.2
-                
-                # Mouse displacement y-axis correction
-                # y_disp = indexY-wristY
-                y_disp = 0
-                cursorX = wristX
-                print(f"CURSOR BUMP: {cursorbump_y}")
-                cursorY = wristY+cursorbump_y
-                grab_distance = np.linalg.norm(np.array((thumbX,thumbY))-np.array((indexX,indexY)))
-                if grab_distance > drag_threshold or handChopOrientation == True: # adjust
-                    modalMouseButtonList.append('up')
-                elif grab_distance < drag_threshold and modalAction == 'track':
-                    modalMouseButtonList.append('down')
-                if cursorX is not None and cursorX > 0:
-                    currentCoords = [cursorX, cursorY]
-                    cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
-                    cursorAccel = cursorDifference
-                    #print(f'Cursor Acceleration: {cursorAccel}')
-                    if cursorAccel > 15:
-                        v1 = Vector2(lastCoords[0], lastCoords[1])
-                        v2 = Vector2(cursorX, cursorY)
-                        # print ('v1 : '+v1)
-                        # print ('v2 : '+v2)
-                        # print(lerp(v1,v2,1))
-                        v3 = lerp(v1, v2, totalTime*.05)
-                        pyautogui.moveTo(v3.x,v3.y,0)
-                    lastCoords = currentCoords
-
-                    #sonification.sendOSCMessage('track', cursorX)
-                    #sonification.sendXAccelerationOSC(cursorAccel)
-        except Exception as e:
-            #print(e)
-            modalMouseButtonList.append('up')
-            pass
-     
-
-        
-        # mouse select #
-
-
-        ## Determine FPS ##     
-        end = time.time()
-        totalTime = end - start
-        fps = 1 / totalTime
-
-        ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
-        rad = 4
-        thick = 3
-
-        mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, mp_drawing.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad),mp_drawing.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad))
-        if which_hand == 'right':
-            mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),mp_drawing.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
-        elif which_hand == 'left':
-            mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),mp_drawing.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
-        #mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS)
-        
-        capWidth  = cap.get(3) # input frame width
-        capHeight = cap.get(4) # input frame height
-        scale = 0.75 # Scale feedback 0.23 for Lightbox
-        newCapWidth = int(screenWidth * (scale))
-        newCapHeight = int(newCapWidth * capHeight / capWidth)
-
-        capX = screenWidth - newCapWidth - 5
-        capY = screenHeight - newCapHeight - 33
-        #cv2.putText(image, f"FPS: {int(fps)}", (20,120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2) # provide feedback on current FPS
-        
-        if mouse_down == True:
-            # Mac
-            cv2.putText(image, 'DRAG', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, 'DRAG', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-        elif click == True:
-            # Mac
-            cv2.putText(image, 'SELECT', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, 'SELECT', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-        else:
-            # Mac
-            cv2.putText(image, f'{gesture_text}', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, f'{gesture_text}', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-
-        cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
-        cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
-        cv2.moveWindow('Choreographic Interface', capX,capY) # relocate feedback
-
-        if cv2.waitKey(5) & 0xFF == 27:
-            break
+    # VIZ - TODO: add to module
+    capWidth  = cap.get(3) # input frame width
+    capHeight = cap.get(4) # input frame height
+    scale = 0.75 # Scale feedback 0.23 for Lightbox
+    newCapWidth = int(screenWidth * (scale))
+    newCapHeight = int(newCapWidth * capHeight / capWidth)
+    capX = screenWidth - newCapWidth - 5
+    capY = screenHeight - newCapHeight - 33
+    lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.pose_landmarks, lb_ci.mpHolsitic.POSE_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad))
+    if lb_ci.whichHand == 'right':
+            lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.left_hand_landmarks, lb_ci.mpHolsitic.HAND_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
+    elif lb_ci.whichHand == 'left':
+        lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.right_hand_landmarks, lb_ci.mpHolsitic.HAND_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
+    if lb_ci.mouseDown == True:
+            cv2.putText(image, 'DRAG',  (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+    #elif click == True:
+    #    cv2.putText(image, 'SELECT', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+    else:
+        cv2.putText(image, f'{gesture_text}', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+    cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
+    cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
+    cv2.moveWindow('Choreographic Interface', capX,capY) # relocate feedback
+    if cv2.waitKey(5) & 0xFF == 27:
+        break
 
 cap.release()
-
-
