@@ -6,6 +6,7 @@
 ###################################################################################
 
 ## Required Packages and Libraries ##
+from shutil import which
 import cv2
 import mediapipe as mp
 from mediapipe.python.solutions import pose as mp_pose
@@ -18,8 +19,11 @@ import os
 import pickle
 import keyboard
 import sys
-#import sonification #CI Sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
-
+#import sonification #CI #sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
+import collections
+# import statistics
+# from statistics import mode
+# from scipy.stats import mode
 ## Defining import objects for landmark tracking ##
 mp_holistic = mp.solutions.holistic # for holistic landmarks
 mp_drawing = mp.solutions.drawing_utils # for drawing landmark feedback
@@ -66,14 +70,21 @@ which_hand = 'right'
 mouse_down = False
 click = False
 reset_hand = False
-buffer_threshold = 5 # frames
-# action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown'] # exclude neutral and track
-action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown', 'neutral', 'track'] # exclude track
-buffer = {key: 0 for key in action_list} # counts number of frames in a row a particular action has been registered. 
+max_distance_wrist_index = 0
+
+modalActionList = collections.deque(['neutral']* 10, maxlen=10) #initialize modal list with neutral
+modalAction = 'neutral'
+modalMouseButtonList = collections.deque(['up']* 10, maxlen=10) #initialize modal list with up
+modalMouseState = 'up'
+missingLandmarkBuffer = collections.deque([False]* 10, maxlen=10) #initialize modal list with False
+clickBuffer = collections.deque([False]* 10, maxlen=10) #initialize modal list with False
+
 
 #declaring these to avoid error on start
 action = 'neutral' 
 execute = False
+lastExecutedAction = 'neutral'
+handChopOrientation = False
 
 ## audio variable declaration
 currentCoords = [0,0]
@@ -81,10 +92,12 @@ lastCoords = [0,0]
 zoomLevel = 0
 cursorX = 0
 cursorY = 0
-trackingActive = False
-lastAction = ''
+totalTime = .01
 
 
+def mode(buffer):
+    value = max(buffer, key = buffer.count)
+    return value
 ## Main loop ##
 cap = cv2.VideoCapture(0) # open web cam
 with mp_holistic.Holistic(
@@ -120,7 +133,7 @@ with mp_holistic.Holistic(
             gesture = class_map[classification[0]]
             action = gesture_map[gesture]
 
-            ## SOFT DELETION OF NEUTRAL UNTIL WE DECIDE WHETHER WE ACTUALLY WANT TO GET RID OF IT FROM THE CLASSIFIER ##
+            ## @LINS: SOFT DELETION OF NEUTRAL UNTIL WE DECIDE WHETHER WE ACTUALLY WANT TO GET RID OF IT FROM THE CLASSIFIER ##
             if action == 'neutral':
                 action = 'track'
 
@@ -136,46 +149,108 @@ with mp_holistic.Holistic(
         except Exception as e:
             pass
             
-        ## Collect specific landmarks of interest - dexterous movements (Using hand landmarks) ##
+        ## Collect specific landmarks of interest - dexterous movements (Using hand landmarks) ##        
         try:
             x_wristR = results.left_hand_landmarks.landmark[0].x * screenWidth # --> Right Wrist (x-coor)
-            y_wristR = results.left_hand_landmarks.landmark[0].y * screenHeight # --> Right Wrist (y-coor)
-            x_thumbR = results.left_hand_landmarks.landmark[2].x * screenWidth # --> Right Thumb Tip (x-coor) #changing thumb from tip to middle (4 to 2)
-            y_thumbR = results.left_hand_landmarks.landmark[2].y * screenHeight # --> Right Thumb Tip (y-coor) #changing thumb from tip to middle (4 to 2)
-            x_thumbTipR = results.left_hand_landmarks.landmark[4].x * screenWidth # --> Right Thumb Tip (x-coor) 
-            y_thumbTipR = results.left_hand_landmarks.landmark[4].y * screenHeight # --> Right Thumb Tip (y-coor) 
-            x_indexR = results.left_hand_landmarks.landmark[8].x * screenWidth # --> Right Index Finger Tip (x-coor)
-            y_indexR = results.left_hand_landmarks.landmark[8].y * screenHeight # --> Right Index Finger Tip (y-coor)
-            x_pinkyR = results.left_hand_landmarks.landmark[20].x * screenWidth # --> Right Pinky Finger Tip (x-coor)
-            y_pinkyR = results.left_hand_landmarks.landmark[20].y * screenHeight # --> Right Pinky Finger Tip (y-coor)
+            if which_hand == 'right':
+                missingLandmarkBuffer.append(False)
         except Exception as e:
+            if which_hand == 'right':
+                missingLandmarkBuffer.append(True)
+                clickBuffer.append(False)
             pass
         try:
-            x_wristL = results.right_hand_landmarks.landmark[0].x * screenWidth # --> Left Wrist (x-coor) 
+            y_wristR = results.left_hand_landmarks.landmark[0].y * screenHeight # --> Right Wrist (y-coor)
+        except:
+            pass
+        try:
+            x_thumbR = results.left_hand_landmarks.landmark[2].x * screenWidth # --> Right Thumb Tip (x-coor) #changing thumb from tip to middle (4 to 2)
+        except:
+            pass
+        try:
+            y_thumbR = results.left_hand_landmarks.landmark[2].y * screenHeight # --> Right Thumb Tip (y-coor) #changing thumb from tip to middle (4 to 2)
+        except:
+            pass
+        try:
+            x_thumbTipR = results.left_hand_landmarks.landmark[4].x * screenWidth # --> Right Thumb Tip (x-coor)
+        except:
+            pass
+        try:
+            y_thumbTipR = results.left_hand_landmarks.landmark[4].y * screenHeight # --> Right Thumb Tip (y-coor) 
+        except:
+            pass
+        try:
+            x_indexR = results.left_hand_landmarks.landmark[8].x * screenWidth # --> Right Index Finger Tip (x-coor)
+        except:
+            pass
+        try:
+            y_indexR = results.left_hand_landmarks.landmark[8].y * screenHeight # --> Right Index Finger Tip (y-coor)
+        except:
+            pass
+        try:
+            x_pinkyR = results.left_hand_landmarks.landmark[20].x * screenWidth # --> Right Pinky Finger Tip (x-coor)
+        except:
+            pass
+        try:
+            y_pinkyR = results.left_hand_landmarks.landmark[20].y * screenHeight # --> Right Pinky Finger Tip (y-coor)
+        except:
+            pass
+        try:
+            x_wristL = results.right_hand_landmarks.landmark[0].x * screenWidth # --> Left Wrist (x-coor)
+            if which_hand == 'left':
+                missingLandmarkBuffer.append(False)
+        except:
+            if which_hand == 'left':
+                missingLandmarkBuffer.append(True)
+                clickBuffer.append(False)
+            pass
+        try:
             y_wristL = results.right_hand_landmarks.landmark[0].y * screenHeight # --> Left Wrist (y-coor)
+        except:
+            pass
+        try:
             x_thumbL = results.right_hand_landmarks.landmark[2].x * screenWidth # --> Left Thumb Tip (x-coor)  #changing thumb from tip to middle (4 to 2)
+        except:
+            pass
+        try:
             y_thumbL = results.right_hand_landmarks.landmark[2].y * screenHeight # --> Left Thumb Tip (y-coor) #changing thumb from tip to middle (4 to 2)
+        except:
+            pass
+        try:
             x_thumbTipL = results.right_hand_landmarks.landmark[4].x * screenWidth # --> Left Thumb Tip (x-coor)  
+        except:
+            pass
+        try:
             y_thumbTipL = results.right_hand_landmarks.landmark[4].y * screenHeight # --> Left Thumb Tip (y-coor) 
+        except:
+            pass
+        try:
             x_indexL = results.right_hand_landmarks.landmark[8].x * screenWidth # --> Left Index Finger Tip (x-coor)
+        except:
+            pass
+        try:
             y_indexL = results.right_hand_landmarks.landmark[8].y * screenHeight # --> Left Index Finger Tip (y-coor)
+        except:
+            pass
+        try:
             x_pinkyL = results.right_hand_landmarks.landmark[20].x * screenWidth # --> Left Pinky Finger Tip (x-coor)
+        except:
+            pass
+        try:
             y_pinkyL = results.right_hand_landmarks.landmark[20].y * screenHeight # --> RigLeftht Pinky Finger Tip (y-coor)
-        except Exception as e:
+        except:
             pass
 
         ## Determine handedness (L vs. R) ##
         try:
             x_face_center = results.pose_landmarks.landmark[0].x * screenWidth # --> Nose (x-coor)
             y_face_center = results.pose_landmarks.landmark[0].y * screenHeight # --> Nose (y-coor)
-            
             x_earR = results.pose_landmarks.landmark[8].x * screenWidth # --> right ear (x-coor)
             y_earR = results.pose_landmarks.landmark[8].y * screenHeight # --> right ear (y-coor)
             x_earL = results.pose_landmarks.landmark[7].x * screenWidth # --> left ear (x-coor)
             y_earL = results.pose_landmarks.landmark[7].y * screenHeight # --> left ear (y-coor)
         except Exception as e:
             pass
-
         try:
             distance_between_shoulderR_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderR,y_shoulderR)))
             distance_between_shoulderL_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderL,y_shoulderL)))
@@ -183,15 +258,6 @@ with mp_holistic.Holistic(
                 which_hand = 'left' # mirrored
             elif (distance_between_shoulderL_faceCenter<distance_between_shoulderR_faceCenter) and (distance_between_shoulderL_faceCenter<(distance_between_shoulders*0.65)):
                 which_hand = 'right' # mirrored
-            
-            # handedness determined by ears
-            # distance_between_shoulderR_earR = np.linalg.norm(np.array((x_earR,y_earR))-np.array((x_shoulderR,y_shoulderR)))
-            # distance_between_shoulderL_earL = np.linalg.norm(np.array((x_earL,y_earR))-np.array((x_shoulderL,y_shoulderL)))
-            # if (distance_between_shoulderL_earL>distance_between_shoulderR_earR) and (distance_between_shoulderR_earR<(distance_between_shoulders*0.6)):
-            #     which_hand = 'left' # mirrored
-            # elif (distance_between_shoulderL_earL<distance_between_shoulderR_earR) and (distance_between_shoulderL_earL<(distance_between_shoulders*0.6)):
-            #     which_hand = 'right' # mirrored
-
         except Exception as e:
             pass
 
@@ -206,198 +272,234 @@ with mp_holistic.Holistic(
                     action = 'track' # correct for unintended zoom in
         except Exception as e:
             pass
+
+
         try:
             if action == 'track':
                 if (which_hand == 'right'):
                     handSpan = np.linalg.norm(np.array((x_pinkyR,y_pinkyR))-np.array((x_thumbTipR,y_thumbTipR)))
                 else:
                     handSpan = np.linalg.norm(np.array((x_pinkyL,y_pinkyL))-np.array((x_thumbTipL,y_thumbTipL)))
-                        
                 normalizedHandSpan = handSpan / distance_between_shoulders
-                # print("handspan: " + str(normalizedHandSpan))
                 if normalizedHandSpan < .2:
-                    action = 'neutral' # @MAX --> can we change this to track? Kind of defeats the purpose of what you were doing here but trying to get rid of neutral.
-            
+                    handChopOrientation = True 
+                else: handChopOrientation = False
         except Exception as e:
             pass
+        
+        
         ## LOG Actions ##
-        # if (action == 'track') or (action == 'neutral') or (action == None): 
-        # if (action == 'track') or (action == None): # adding neutral to the buffer
-        if (action == None):
-            gesture_text = ''
-            execute = False
-            print ('action is none')
-            pass
-        else:
-            if (len(list(set(list(buffer.values())))) == 1): # All values are the same (e.g. == 0) - base case
-                buffer[action] += 1
-            else:
-                stacked_keys = [] 
-                for key in buffer.keys():
-                    if buffer[key]>0:
-                        stacked_keys.append(key)
-                if (len(stacked_keys) == 1) and (stacked_keys[0]==action):
-                    buffer[action] += 1
-                    if buffer[action] > buffer_threshold:
-                        if execute == False:
-                            execute = True
-                            action_to_execute = action
-                            lmColor = lmColor_map[action]
-                            connColor = connColor_map[action]
-                            gesture_text = gesture_map_text[action]
-                            buffer = {key: 0 for key in action_list}  # reset dictionary
-                            buffer[action] = int(buffer_threshold) + 1 #added so current filled action continues to run
-                            lastExecutedAction = action
-                    else:
-                        execute = False ## added so actions stop when neutral is detected 
-                        action_to_execute = 'neutral'
-                        gesture_text = ''
+        if mode(missingLandmarkBuffer) == True or action == None:
+            action = 'neutral' #modal buffer has to be filled with something, so if we can't act, fill it with neutral
+        if action == 'track':
+            if handChopOrientation == True:
+                action = 'neutral'
+        modalActionList.append(action)
+        # modalAction = mode(modalActionList)
+        modalAction = mode(modalActionList)
+        #print(modalAction)
+        lmColor = lmColor_map[modalAction]
+        connColor = connColor_map[modalAction]
+        gesture_text = gesture_map_text[modalAction]
+        #for the text, when making track active always only set to track if nothing else
 
-
-                else:
-                    buffer = {key: 0 for key in action_list}  # reset dictionary
-                    buffer[action] += 1 # add count to new action
-                    # gesture_text = ''
 
         ## EXECUTE Actions ##
         try:
-            if execute == True:
-                if (action_to_execute == 'refresh'):
-                    pyautogui.hotkey('command', 'r')
-                    zoomLevel = 0 
-                elif (action_to_execute == 'zoomIn'):
-                    #pyautogui.hotkey('command', '+')
-                    pyautogui.scroll(5)
-                    if zoomLevel > -10:
-                        zoomLevel -= totalTime
-                        audioParam = zoomLevel 
-                    # sonification.sendOSCMessage(action, audioParam)
-                elif (action_to_execute == 'zoomOut'):
-                    #pyautogui.hotkey('command', '-')
-                    pyautogui.scroll(-5)
-                    if zoomLevel < 10:
-                        zoomLevel += totalTime
-                        audioParam = zoomLevel 
-                    # sonification.sendOSCMessage(action, audioParam)
-                elif (action_to_execute == 'scrollUp'):
-                    pyautogui.scroll(5)
-                    # pyautogui.press('right') #Giulia
-                elif (action_to_execute == 'scrollDown'):
-                    pyautogui.scroll(-5)
-                    # pyautogui.press('left') #Giulia
-                elif (action_to_execute == 'track'):
-                    trackingActive = True
+            if (modalAction == 'refresh' and lastExecutedAction != 'refresh'):
+                pyautogui.hotkey('command', 'r')
+                # pyautogui.hotkey('ctrl', 'r') #for LB
+                zoomLevel = 0 
+            elif (modalAction == 'zoomIn'):
+                #pyautogui.hotkey('command', '+')
+                pyautogui.scroll(5)
+                if zoomLevel > -10:
+                    zoomLevel -= totalTime
+                    audioParam = zoomLevel 
+            elif (modalAction == 'zoomOut'):
+                #pyautogui.hotkey('command', '-')
+                pyautogui.scroll(-5)
+                if zoomLevel < 10:
+                    zoomLevel += totalTime
+                    audioParam = zoomLevel 
+            elif (modalAction == 'scrollUp'):
+                pyautogui.scroll(5)
+                # pyautogui.scroll(50) # for LB
+                # pyautogui.press('right') #Giulia
+            elif (modalAction == 'scrollDown'):
+                pyautogui.scroll(-5)
+                # pyautogui.scroll(50) # for LB
+                # pyautogui.press('left') #Giulia
+            '''
+            if modalAction == 'track':
+                if modalAction != lastExecutedAction:
                     #sonification.sendOSCMessage('trackStart','')
-                if (action_to_execute != 'track'):
-                    #sonification.sendOSCMessage(action_to_execute,'')
-                    trackingActive = False
             else:
-                gesture_text = ''
-                if (trackingActive == True): 
-                    trackingActive = False
-
+                #sonification.sendOSCMessage(modalAction,'')
+            '''
+            #if lastExecutedAction != modalAction:
+                #print ('pose changed')
+                #print ('modal action is ' + modalAction)
+            lastExecutedAction = modalAction
         except Exception as e:
             pass
     
         ## Move and Drag Mouse ##
-        
+
+        ##set handedness vars
         try:
-            #if (trackingActive == True): # LET MOUSE GO ALWAYS
-            drag_threshold = distance_between_shoulders*0.2
-            if (which_hand == 'right'):
-                # Mouse displacement y-axis correction
-                y_disp = y_indexR-y_wristR
 
-                grab_distance = np.linalg.norm(np.array((x_thumbR,y_thumbR))-np.array((x_indexR,y_indexR)))
-                # print(str(grab_distance) + 'GRAB DISTANCE')
-                if grab_distance > drag_threshold: # adjust
-                    if mouse_down == True:
-                        pyautogui.mouseUp()
-                        mouse_down = False
-                        print('MOUSE UP!')
-                        gesture_text = 'TRACK'
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.moveTo(x_wristR, y_wristR+y_disp) # Move cursor
-                    cursorX = x_wristR
-                    cursorY = y_wristR
-                elif grab_distance < drag_threshold:
-                    if mouse_down == False:
-                        pyautogui.mouseDown()
-                        mouse_down = True
-                        print('MOUSE DOWN!')
-                        gesture_text = 'DRAG'
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.dragTo(x_wristR, y_wristR+y_disp,button='left') # Drag cursor
-                    cursorX = x_wristR
-                    cursorY = y_wristR
+            # Vitruvian adjustment #
+            arm_length = distance_between_shoulders*2
+
+
             if which_hand == 'left':
-                # Mouse displacement y-axis correction
-                y_disp = y_indexL-y_wristL
+                wristX = x_wristL
+                wristY = y_wristL
+                thumbX = x_thumbL
+                thumbY = y_thumbL
+                indexX = x_indexL
+                indexY = y_indexL
 
-                grab_distance = np.linalg.norm(np.array((x_thumbL,y_thumbL))-np.array((x_indexL,y_indexL)))
-                if grab_distance > drag_threshold: # adjust
-                    if mouse_down == True:
-                        pyautogui.mouseUp()
-                        mouse_down = False
-                        print('MOUSE UP!')
-                        gesture_text = 'TRACK'
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.moveTo(x_wristL, y_wristL+y_disp) # Move cursor
-                    cursorX = x_wristL
-                    cursorY = y_wristL
-                elif grab_distance < drag_threshold:
-                    if mouse_down == False:
-                        pyautogui.mouseDown()
-                        mouse_down = True
-                        print('MOUSE DOWN!')
-                        gesture_text = 'DRAG'
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.dragTo(x_wristL, y_wristL+y_disp,button='left') # Drag cursor
-                    cursorX = x_wristR
-                    cursorY = y_wristR
-            if cursorX is not None:
-                currentCoords = [cursorX, cursorY]
-                cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
-                cursorAccel = cursorDifference
-                lastCoords = currentCoords
-                #sonification.sendOSCMessage('track', cursorX)
-                #sonification.sendXAccelerationOSC(cursorAccel)
-            # else: mouse_down = False
+                # For vitruvian reach logic
+                shoulderX = x_shoulderL
+                shoulderY = y_shoulderL
+                max_reach_y = y_shoulderL+arm_length
+                min_reach_y = y_shoulderL+arm_length
+                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
+                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
+                else: # wrist is lower than shoulder
+                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
+                #reachY = y_shoulderL+arm_length
+                #reachX = x_shoulderL+arm_length
+                #print(f'Left Hand X Sign: {np.sign(wristX-shoulderX)}')
+                #print(f'Left Hand Y Sign: {np.sign(wristY-shoulderY)}')
+
+            else:
+                wristX = x_wristR
+                wristY = y_wristR
+                thumbX = x_thumbR
+                thumbY = y_thumbR
+                indexX = x_indexR
+                indexY = y_indexR
+
+
+                # For vitruvian reach logic
+                shoulderX = x_shoulderR
+                shoulderY = y_shoulderR
+                max_reach_y = y_shoulderR+arm_length
+                min_reach_y = y_shoulderR+arm_length
+                if (wristY-shoulderY)>0: # wrist is higher than shoulder  
+                    cursorbump_y = ((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index
+                else: # wrist is lower than shoulder
+                    cursorbump_y = -1*(((wristY-shoulderY)/max_reach_y)*max_distance_wrist_index)
+                #reachY = y_shoulderR+arm_length
+                #reachX = x_shoulderR+arm_length
+                #print(f'Right Hand X Sign: {np.sign(wristX-shoulderX)}')
+                #print(f'Right Hand Y Sign: {np.sign(wristY-shoulderY)}')
+
         except Exception as e:
+            #print(e)
+            pass
+
+        try:
+            # Vitruvian adjustment part 2 #
+            if np.abs(indexY-wristY)>max_distance_wrist_index:
+                max_distance_wrist_index = np.abs(indexY-wristY) # proxy for hand size, always take largest value found e.g. should get better over time and adjust to person
+        except:
             pass
         
+        ##end set handedness vars
+        # BOOKMARK
+        
+        if mode(modalMouseButtonList) == 'down':
+            if mouse_down == False:
+                mouse_down = True
+                pyautogui.mouseDown()
+                #print('MOUSE DOWN!')
+                gesture_text = 'DRAG'
+                #sonification.sendMouseDown(mouse_down)
+        else:
+            if mouse_down == True:
+                mouse_down = False
+                pyautogui.mouseUp()
+                mouse_down = False
+                #print('MOUSE UP!')
+                #sonification.sendMouseDown(mouse_down)
+        
+        try:
+            if (modalAction == 'track'): # LET MOUSE GO ALWAYS
+                drag_threshold = distance_between_shoulders*0.2
+                
+                # Mouse displacement y-axis correction
+                # y_disp = indexY-wristY
+                y_disp = 0
+                cursorX = wristX
+                print(f"CURSOR BUMP: {cursorbump_y}")
+                cursorY = wristY+cursorbump_y
+                grab_distance = np.linalg.norm(np.array((thumbX,thumbY))-np.array((indexX,indexY)))
+                if grab_distance > drag_threshold or handChopOrientation == True: # adjust
+                    modalMouseButtonList.append('up')
+                elif grab_distance < drag_threshold and modalAction == 'track':
+                    modalMouseButtonList.append('down')
+                if cursorX is not None and cursorX > 0:
+                    currentCoords = [cursorX, cursorY]
+                    cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
+                    cursorAccel = cursorDifference
+                    #print(f'Cursor Acceleration: {cursorAccel}')
+                    if cursorAccel > 15:
+                        v1 = Vector2(lastCoords[0], lastCoords[1])
+                        v2 = Vector2(cursorX, cursorY)
+                        # print ('v1 : '+v1)
+                        # print ('v2 : '+v2)
+                        # print(lerp(v1,v2,1))
+                        v3 = lerp(v1, v2, totalTime*.05)
+                        pyautogui.moveTo(v3.x,v3.y,0)
+                    lastCoords = currentCoords
+
+                    #sonification.sendOSCMessage('track', cursorX)
+                    #sonification.sendXAccelerationOSC(cursorAccel)
+        except Exception as e:
+            #print(e)
+            modalMouseButtonList.append('up')
+            pass
+     
+
         ## Mouse Select ##
         try:
-            select_threshold = distance_between_shoulders * 0.15
-            if which_hand == 'right':
-                select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
+            if modalAction == 'track':
+                select_threshold = distance_between_shoulders * 0.15
+                if which_hand == 'right':
+                    select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
+                if which_hand == 'left':
+                    select_distance = np.linalg.norm(np.array((x_indexR,y_indexR))-np.array((x_wristL,y_wristL)))
+                
                 if select_distance < select_threshold:
-                    if click == False:
-                        pyautogui.click(button='left')
-                        click = True
-                        sonification.sendOSCMessage('select','')
+                    # print('select True added to buffer')
+                    clickBuffer.append(True)
                 elif select_distance > select_threshold:
-                    if click == True:
-                        click = False
-            if which_hand == 'left':
-                select_distance = np.linalg.norm(np.array((x_indexR,y_indexR))-np.array((x_wristL,y_wristL)))
-                if select_distance < select_threshold:
+                    clickBuffer.append(False)
+        
+                if mode(clickBuffer) == True:
                     if click == False:
-                        pyautogui.click(button='left')
                         click = True
+                        pyautogui.click(button='left')
                         #sonification.sendOSCMessage('select','')
-                elif select_distance > select_threshold:
-                    if click == True:
-                        click = False
+                        print('clicked!')
+                elif click == True:
+                    click = False
+                    #sonification.sendOSCMessage('deselect','')
+
+                
         except Exception as e:
-            pass        
+            # print (e)
+            pass       
 
 
         ## Determine FPS ##     
         end = time.time()
         totalTime = end - start
         fps = 1 / totalTime
-        buffer_threshold = fps # Update buffer threshold
 
         ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
         rad = 4
@@ -412,7 +514,7 @@ with mp_holistic.Holistic(
         
         capWidth  = cap.get(3) # input frame width
         capHeight = cap.get(4) # input frame height
-        scale = 0.5 # Scale feedback 0.23 for Lightbox
+        scale = 0.75 # Scale feedback 0.23 for Lightbox
         newCapWidth = int(screenWidth * (scale))
         newCapHeight = int(newCapWidth * capHeight / capWidth)
 
@@ -420,22 +522,7 @@ with mp_holistic.Holistic(
         capY = screenHeight - newCapHeight - 33
         #cv2.putText(image, f"FPS: {int(fps)}", (20,120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2) # provide feedback on current FPS
         
-        if mouse_down == True:
-            # Mac
-            cv2.putText(image, 'DRAG', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, 'DRAG', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-        elif click == True:
-            # Mac
-            cv2.putText(image, 'SELECT', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, 'SELECT', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-        else:
-            # Mac
-            cv2.putText(image, f'{gesture_text}', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-            # Lightbox
-            # cv2.putText(image, f'{gesture_text}', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
-
+        
         cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
         cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
         cv2.moveWindow('Choreographic Interface', capX,capY) # relocate feedback
@@ -444,3 +531,5 @@ with mp_holistic.Holistic(
             break
 
 cap.release()
+
+
