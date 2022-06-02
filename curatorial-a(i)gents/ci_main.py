@@ -67,11 +67,11 @@ which_hand = 'right'
 mouse_down = False
 click = False
 reset_hand = False
-buffer_threshold = 5 # frames
-# action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown'] # exclude neutral and track
+
 action_list = ['refresh', 'zoomIn', 'zoomOut', 'scrollUp', 'scrollDown', 'neutral', 'track'] # exclude track
 buffer = {key: 0 for key in action_list} # counts number of frames in a row a particular action has been registered. 
-#modalActionList = ['neutral'] * 10 #initialize modal list with neutral
+
+
 modalActionList = collections.deque(['neutral']* 10, maxlen=30) #initialize modal list with neutral
 modalAction = 'neutral'
 modalMouseButtonList = collections.deque(['up']* 10, maxlen=10) #initialize modal list with up
@@ -92,9 +92,7 @@ cursorX = 0
 cursorY = 0
 trackingActive = False
 totalTime = .01
-# x_wristL, x_thumbL, x_thumbTipL, x_indexL, x_pinkyL = 5 * 0
-# y_wristL, y_thumbL, y_thumbTipL, y_indexL, y_pinkyL = 5 * 0
-# leftLandmarkVars_x = [x_wristL, x_thumbL, x_thumbTipL, x_indexL, x_pinkyL]
+
 
 class Vector2:
     def __init__(self,x,y):
@@ -106,20 +104,9 @@ class Vector2:
         return Vector2(self.x * scalar, self.y * scalar)
     def __str__(self):
         return f"x:{self.x}, y:{self.y}"
-# v1 = Vector2(100, 100)
-# v2 = Vector2(200,200)
-
 
 def lerp(v1, v2, time): #time is value between 0 and 1
     return v1 * (1- time) + v2 * time
-
-#functions
-def GetRightHandXLandMarks(landmarkName, landmarkIndex):
-            try:
-                landmarkName = results.left_hand_landmarks.landmark[landmarkIndex].x * screenWidth
-            except Exception as e:
-                print(e)
-#end functions
 
 ## Main loop ##
 cap = cv2.VideoCapture(0) # open web cam
@@ -156,7 +143,7 @@ with mp_holistic.Holistic(
             gesture = class_map[classification[0]]
             action = gesture_map[gesture]
 
-            ## SOFT DELETION OF NEUTRAL UNTIL WE DECIDE WHETHER WE ACTUALLY WANT TO GET RID OF IT FROM THE CLASSIFIER ##
+            ## @LINS: SOFT DELETION OF NEUTRAL UNTIL WE DECIDE WHETHER WE ACTUALLY WANT TO GET RID OF IT FROM THE CLASSIFIER ##
             if action == 'neutral':
                 action = 'track'
 
@@ -172,16 +159,11 @@ with mp_holistic.Holistic(
         except Exception as e:
             pass
             
-        ## Collect specific landmarks of interest - dexterous movements (Using hand landmarks) ##
-        #@jordan, just realized that if one of these landmarks fails, all subsequent landmarks are not updated
-        
-        
-        # GetRightHandXLandMarks(x_wristR,0)
+        ## Collect specific landmarks of interest - dexterous movements (Using hand landmarks) ##        
         try:
             x_wristR = results.left_hand_landmarks.landmark[0].x * screenWidth # --> Right Wrist (x-coor)
             missingLandmarkBuffer.append(False)
         except Exception as e:
-            # print ('right wrist essential landmark missing')
             missingLandmarkBuffer.append(True)
             pass
         try:
@@ -265,14 +247,12 @@ with mp_holistic.Holistic(
         try:
             x_face_center = results.pose_landmarks.landmark[0].x * screenWidth # --> Nose (x-coor)
             y_face_center = results.pose_landmarks.landmark[0].y * screenHeight # --> Nose (y-coor)
-            
             x_earR = results.pose_landmarks.landmark[8].x * screenWidth # --> right ear (x-coor)
             y_earR = results.pose_landmarks.landmark[8].y * screenHeight # --> right ear (y-coor)
             x_earL = results.pose_landmarks.landmark[7].x * screenWidth # --> left ear (x-coor)
             y_earL = results.pose_landmarks.landmark[7].y * screenHeight # --> left ear (y-coor)
         except Exception as e:
             pass
-
         try:
             distance_between_shoulderR_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderR,y_shoulderR)))
             distance_between_shoulderL_faceCenter = np.linalg.norm(np.array((x_face_center,y_face_center))-np.array((x_shoulderL,y_shoulderL)))
@@ -280,15 +260,6 @@ with mp_holistic.Holistic(
                 which_hand = 'left' # mirrored
             elif (distance_between_shoulderL_faceCenter<distance_between_shoulderR_faceCenter) and (distance_between_shoulderL_faceCenter<(distance_between_shoulders*0.65)):
                 which_hand = 'right' # mirrored
-            
-            # handedness determined by ears
-            # distance_between_shoulderR_earR = np.linalg.norm(np.array((x_earR,y_earR))-np.array((x_shoulderR,y_shoulderR)))
-            # distance_between_shoulderL_earL = np.linalg.norm(np.array((x_earL,y_earR))-np.array((x_shoulderL,y_shoulderL)))
-            # if (distance_between_shoulderL_earL>distance_between_shoulderR_earR) and (distance_between_shoulderR_earR<(distance_between_shoulders*0.6)):
-            #     which_hand = 'left' # mirrored
-            # elif (distance_between_shoulderL_earL<distance_between_shoulderR_earR) and (distance_between_shoulderL_earL<(distance_between_shoulders*0.6)):
-            #     which_hand = 'right' # mirrored
-
         except Exception as e:
             pass
 
@@ -303,107 +274,75 @@ with mp_holistic.Holistic(
                     action = 'track' # correct for unintended zoom in
         except Exception as e:
             pass
+
+
         try:
             if action == 'track':
                 if (which_hand == 'right'):
                     handSpan = np.linalg.norm(np.array((x_pinkyR,y_pinkyR))-np.array((x_thumbTipR,y_thumbTipR)))
                 else:
                     handSpan = np.linalg.norm(np.array((x_pinkyL,y_pinkyL))-np.array((x_thumbTipL,y_thumbTipL)))
-                        
                 normalizedHandSpan = handSpan / distance_between_shoulders
-                # print("handspan: " + str(normalizedHandSpan))
                 if normalizedHandSpan < .2:
-                    handChopOrientation = True # @MAX --> can we change this to track? Kind of defeats the purpose of what you were doing here but trying to get rid of neutral.
+                    handChopOrientation = True 
                 else: handChopOrientation = False
         except Exception as e:
             pass
+        
+        
         ## LOG Actions ##
-        # if (action == 'track') or (action == 'neutral') or (action == None): 
-        # if (action == 'track') or (action == None): # adding neutral to the buffer
         modalActionList.append(action)
         modalAction = mode(modalActionList)
-        #print ('modal action is ' + modalAction)
-        #continue #just to test modal action
         if (action == None):
             action = 'neutral'#modal approach means the buffer should always be filled with something so dont continue
         else:
             execute = True
-            action_to_execute = modalAction
             lmColor = lmColor_map[modalAction]
             connColor = connColor_map[modalAction]
             gesture_text = gesture_map_text[modalAction]
             #for the text, when making track active always only set to track if nothing else
 
-            # if (len(list(set(list(buffer.values())))) == 1): # All values are the same (e.g. == 0) - base case
-            #     buffer[action] += 1
-            # else:
-            #     stacked_keys = [] 
-            #     for key in buffer.keys():
-            #         if buffer[key]>0:
-            #             stacked_keys.append(key)
-            #     if (len(stacked_keys) == 1) and (stacked_keys[0]==action):
-            #         buffer[action] += 1
-            #         if buffer[action] > buffer_threshold:
-            #             if execute == False:
-            #                 execute = True
-            #                 action_to_execute = action
-            #                 lmColor = lmColor_map[action]
-            #                 connColor = connColor_map[action]
-            #                 gesture_text = gesture_map_text[action]
-            #                 buffer = {key: 0 for key in action_list}  # reset dictionary
-            #                 buffer[action] = int(buffer_threshold) + 1 #added so current filled action continues to run
-            #         else:
-            #             execute = False ## added so actions stop when neutral is detected 
-            #             action_to_execute = 'neutral'
-            #             gesture_text = ''
-
-
-            #     else:
-            #         buffer = {key: 0 for key in action_list}  # reset dictionary
-            #         buffer[action] += 1 # add count to new action
-            #         # gesture_text = ''
 
         ## EXECUTE Actions ##
         try:
             if execute == True:
-                if (action_to_execute == 'refresh' and lastExecutedAction != 'refresh'):
+                if (modalAction == 'refresh' and lastExecutedAction != 'refresh'):
                     pyautogui.hotkey('command', 'r')
                     zoomLevel = 0 
-                elif (action_to_execute == 'zoomIn'):
+                elif (modalAction == 'zoomIn'):
                     #pyautogui.hotkey('command', '+')
                     pyautogui.scroll(5)
                     if zoomLevel > -10:
                         zoomLevel -= totalTime
                         audioParam = zoomLevel 
                     # sonification.sendOSCMessage(action, audioParam)
-                elif (action_to_execute == 'zoomOut'):
+                elif (modalAction == 'zoomOut'):
                     #pyautogui.hotkey('command', '-')
                     pyautogui.scroll(-5)
                     if zoomLevel < 10:
                         zoomLevel += totalTime
                         audioParam = zoomLevel 
                     # sonification.sendOSCMessage(action, audioParam)
-                elif (action_to_execute == 'scrollUp'):
+                elif (modalAction == 'scrollUp'):
                     pyautogui.scroll(5)
                     # pyautogui.press('right') #Giulia
-                elif (action_to_execute == 'scrollDown'):
+                elif (modalAction == 'scrollDown'):
                     pyautogui.scroll(-5)
                     # pyautogui.press('left') #Giulia
-                elif (action_to_execute == 'track' or action_to_execute == 'down'):
+                elif (modalAction == 'track' or modalAction == 'down'):
                     trackingActive = True
                     #sonification.sendOSCMessage('trackStart','')
-                if (action_to_execute != 'track'):
-                    #sonification.sendOSCMessage(action_to_execute,'')
+                if (modalAction != 'track'):
+                    #sonification.sendOSCMessage(modalAction,'')
                     trackingActive = False
             else:
                 gesture_text = ''
                 if (trackingActive == True): 
                     trackingActive = False
-            if lastExecutedAction != action_to_execute:
-                print ('pose changed')
-                print ('modal action is ' + modalAction)
-            lastExecutedAction = action_to_execute
-
+            #if lastExecutedAction != modalAction:
+                #print ('pose changed')
+                #print ('modal action is ' + modalAction)
+            lastExecutedAction = modalAction
         except Exception as e:
             pass
     
@@ -428,6 +367,7 @@ with mp_holistic.Holistic(
         except:
             pass
         ##end set handedness vars
+        '''
         if mode(modalMouseButtonList) == 'down':
             if mouse_down == False:
                 mouse_down = True
@@ -442,7 +382,7 @@ with mp_holistic.Holistic(
                 mouse_down = False
                 print('MOUSE UP!')
                 #sonification.sendMouseDown(mouse_down)
-            
+        '''
         try:
             if (mode(missingLandmarkBuffer) == False and modalAction == 'track'): # LET MOUSE GO ALWAYS
                 drag_threshold = distance_between_shoulders*0.2
@@ -459,6 +399,7 @@ with mp_holistic.Holistic(
                         cursorX = wristX
                         cursorY = wristY
                 elif grab_distance < drag_threshold and modalAction == 'track':
+                    print('here')
                     modalMouseButtonList.append('down')
                     if mouse_down:
                         # pyautogui.moveTo(wristX, wristY+y_disp) # Move cursor, not drag to, because we are already holding the mouse down 
@@ -468,7 +409,7 @@ with mp_holistic.Holistic(
                     currentCoords = [cursorX, cursorY]
                     cursorDifference = math.sqrt( ((currentCoords[0]-lastCoords[0])**2)+((currentCoords[1]-lastCoords[1])**2) )
                     cursorAccel = cursorDifference
-                    print(cursorAccel)
+                    #print(f'Cursor Acceleration: {cursorAccel}')
                     if cursorAccel > 15:
                         v1 = Vector2(lastCoords[0], lastCoords[1])
                         v2 = Vector2(cursorX, cursorY)
@@ -486,46 +427,40 @@ with mp_holistic.Holistic(
             print (e)
             modalMouseButtonList.append('up')
             pass
-
-        
-       
-
-
+     
 
         ## Mouse Select ##
-        # try:
-        #     if trackingActive == True:
-
-        #         select_threshold = distance_between_shoulders * 0.15
-        #         if which_hand == 'right':
-        #             select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
-        #             if select_distance < select_threshold:
-        #                 if click == False:
-        #                     pyautogui.click(button='left')
-        #                     click = True
-        #                     sonification.sendOSCMessage('select','')
-        #             elif select_distance > select_threshold:
-        #                 if click == True:
-        #                     click = False
-        #         if which_hand == 'left':
-        #             select_distance = np.linalg.norm(np.array((x_indexR,y_indexR))-np.array((x_wristL,y_wristL)))
-        #             if select_distance < select_threshold:
-        #                 if click == False:
-        #                     pyautogui.click(button='left')
-        #                     click = True
-        #                     #sonification.sendOSCMessage('select','')
-        #             elif select_distance > select_threshold:
-        #                 if click == True:
-        #                     click = False
-        # except Exception as e:
-        #     pass        
+        try:
+            if trackingActive == True:
+                select_threshold = distance_between_shoulders * 0.15
+                if which_hand == 'right':
+                    select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
+                    if select_distance < select_threshold:
+                        if click == False:
+                            pyautogui.click(button='left')
+                            click = True
+                            #sonification.sendOSCMessage('select','')
+                    elif select_distance > select_threshold:
+                        if click == True:
+                            click = False
+                if which_hand == 'left':
+                    select_distance = np.linalg.norm(np.array((x_indexR,y_indexR))-np.array((x_wristL,y_wristL)))
+                    if select_distance < select_threshold:
+                        if click == False:
+                            pyautogui.click(button='left')
+                            click = True
+                            #sonification.sendOSCMessage('select','')
+                    elif select_distance > select_threshold:
+                        if click == True:
+                         click = False
+        except Exception as e:
+            pass       
 
 
         ## Determine FPS ##     
         end = time.time()
         totalTime = end - start
         fps = 1 / totalTime
-        buffer_threshold = fps # Update buffer threshold
 
         ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
         rad = 4
@@ -572,3 +507,5 @@ with mp_holistic.Holistic(
             break
 
 cap.release()
+
+
