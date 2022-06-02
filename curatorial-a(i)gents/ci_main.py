@@ -495,6 +495,7 @@ with mp_holistic.Holistic(
         end = time.time()
         totalTime = end - start
         fps = 1 / totalTime
+        print(fps)
 
         ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
         rad = 4
