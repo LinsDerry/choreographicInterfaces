@@ -4,12 +4,13 @@ By: Lins Derry, Jordan Kruguer, Maximilian Mueller
 Metalab @ Harvard
 """
 
+## TODO - FIX DEQUE --> 
+
 import cv2
 import mediapipe as mp
 import math
 import csv
 import os
-import pandas as pd
 import numpy as np
 import collections
 import poseEmbedding # TODO - include here in this module maybe
@@ -19,21 +20,34 @@ from mediapipe.python.solutions import pose as mp_pose
 import pyautogui, sys
 import time
 import keyboard
+from scipy.stats import mode
 #import sonification #CI #sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
 
-def printsomething(string):
-    print(string)
-## THOUGHT --> dictionary to add elements/landmarks we care about
+# TODO - fold this into CI class 
+class Vector2:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    def __add__(self, other):
+        return Vector2(self.x + other.x, self.y + other.y)
+    def __mul__(self, scalar):
+        return Vector2(self.x * scalar, self.y * scalar)
+    def __str__(self):
+        return f"x:{self.x}, y:{self.y}"
+
+def lerp(v1, v2, time): #time is value between 0 and 1
+    return v1 * (1- time) + v2 * time
+
 class ChoreographicInterface:
     """
     Estimates pose, hand, and face points on a human body using the mediapipe library.
     Uses landmarks to produce choreographic interface gestures and actions. 
     """
 
-    def __init__(self,detectionCon=0.5,trackingCon=0.5,scaleBar=0.0,self.holisticLandmarks=None,
-                 whichHand='right',mouseDown=False,resetHand=False,maxDistanceWristIndex=0.0,modalMouseButtonList=collections.deque(['up']*10,maxlen=10),modalMouseState='up',clickBuffer=collections.deque([False]*10,maxlen=10),handChopOrientation=False,
+    def __init__(self,detectionCon=0.5,trackingCon=0.5,scaleBar=0.0,holisticLandmarks=None,
+                 whichHand='right',mouseDown=False,resetHand=False,maxDistanceWristIndex=0.0,modalMouseButtonList=collections.deque(['up']*5,maxlen=5),modalMouseState='up',clickBuffer=collections.deque([False]*10,maxlen=10),handChopOrientation=False,
                  action='neutral',execute=False,lastExecutedAction='neutral',modalActionList=collections.deque(['neutral']*10,maxlen=10),modalAction='neutral',missingLandmarkBuffer=collections.deque([False]* 10, maxlen=10),logReg=None,
-                 landmarksOfInterest={}):
+                 landmarksOfInterest={'rightWrist':np.nan,'leftWrist':np.nan,'rightThumb':np.nan,'leftThumb':np.nan,'rightIndex':np.nan,'leftIndex':np.nan,'rightShoulder':np.nan,'leftShoulder':np.nan,'faceCenter':np.nan,'rightEar':np.nan,'leftEar':np.nan}):
 
         """
         :params CIDetector
@@ -82,7 +96,7 @@ class ChoreographicInterface:
         :params CIPose
         :param : TODO-DESCRIBE
         """
-        self.landmarksOfInterest
+        self.landmarksOfInterest = landmarksOfInterest
 
     def findHolisticLandmarks(self, img):
         """
@@ -95,7 +109,7 @@ class ChoreographicInterface:
         results = self.holistic.process(img) 
         self.holisticLandmarks = results
         img.flags.writeable = True 
-        img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) 
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR) 
         return img 
     
     def updateLandmarksOfInterest(self):
@@ -104,53 +118,96 @@ class ChoreographicInterface:
         if results is not None:
             try:
                 self.landmarksOfInterest['rightWrist'] = results.left_hand_landmarks.landmark[0]
-                self.landmarksOfInterest['leftWrist'] = results.right_hand_landmarks.landmark[0]
-                self.missingLandmarkBuffer.append(False)
+                if self.whichHand == 'right':
+                    self.missingLandmarkBuffer.append(False)
             except Exception as e:
-                self.missingLandmarkBuffer.append(True)
-                self.clickBuffer.append(False)
-            self.landmarksOfInterest['rightThumb'] = results.left_hand_landmarks.landmark[2]
-            self.landmarksOfInterest['leftThumb'] = results.right_hand_landmarks.landmark[2]
-            self.landmarksOfInterest['rightIndex'] = results.left_hand_landmarks.landmark[8]
-            self.landmarksOfInterest['leftIndex'] = results.right_hand_landmarks.landmark[8]
-            self.landmarksOfInterest['rightShoulder'] = results.pose_landmarks.landmark[12]
-            self.landmarksOfInterest['leftShoulder'] = results.pose_landmarks.landmark[11]
-
+                if self.whichHand == 'left':
+                    self.missingLandmarkBuffer.append(True)
+                    self.clickBuffer.append(False)
+            try:
+                self.landmarksOfInterest['leftWrist'] = results.right_hand_landmarks.landmark[0]
+                if self.whichHand == 'left':
+                    self.missingLandmarkBuffer.append(False)
+            except Exception as e:
+                if self.whichHand == 'left':
+                    self.missingLandmarkBuffer.append(True)
+                    self.clickBuffer.append(False)
+            try:
+                self.landmarksOfInterest['rightThumb'] = results.left_hand_landmarks.landmark[2]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['leftThumb'] = results.right_hand_landmarks.landmark[2]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['rightIndex'] = results.left_hand_landmarks.landmark[8]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['leftIndex'] = results.right_hand_landmarks.landmark[8]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['rightShoulder'] = results.pose_landmarks.landmark[12]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['leftShoulder'] = results.pose_landmarks.landmark[11]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['faceCenter'] = results.pose_landmarks.landmark[0]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['rightEar'] = results.pose_landmarks.landmark[8]
+            except Exception as e:
+                pass
+            try:
+                self.landmarksOfInterest['leftEar'] = results.pose_landmarks.landmark[7]
+            except Exception as e:
+                pass
 
     def updateScaleBar(self,screenWidth,screenHeight):
         results = self.holisticLandmarks
         if results is not None:
-            rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth 
-            rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight 
-            ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth 
-            ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight 
-            self.scaleBar = np.linalg.norm(np.array((rs_x,rs_y))-np.array((ls_x,ls_y)))
+            try:
+                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth 
+                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight 
+                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth 
+                ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight 
+                self.scaleBar = np.linalg.norm(np.array((rs_x,rs_y))-np.array((ls_x,ls_y)))
+            except Exception as e:
+                pass
 
     def determineHandedness(self,screenWidth,screenHeight):
         
         results = self.holisticLandmarks
         if results is not None:
+            try:
+                fc_x = self.landmarksOfInterest['faceCenter'].x * screenWidth 
+                fc_y = self.landmarksOfInterest['faceCenter'].y * screenHeight 
+                re_x = self.landmarksOfInterest['rightEar'].x * screenWidth 
+                re_y = self.landmarksOfInterest['rightEar'].y * screenHeight 
+                le_x = self.landmarksOfInterest['leftEar'].x * screenWidth 
+                le_y = self.landmarksOfInterest['leftEar'].y * screenHeight 
 
-            fc_x = results.pose_landmarks.landmark[0].x * screenWidth 
-            fc_y = results.pose_landmarks.landmark[0].y * screenHeight 
-            re_x = results.pose_landmarks.landmark[8].x * screenWidth 
-            re_y = results.pose_landmarks.landmark[8].y * screenHeight 
-            le_x = results.pose_landmarks.landmark[7].x * screenWidth 
-            le_y = results.pose_landmarks.landmark[7].y * screenHeight 
+                # TODO make this abstracted so we don't have to repeat this
+                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth 
+                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight 
+                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth 
+                ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight
 
-            # TODO make this abstracted so we don't have to repeat this
-            rs_x = results.pose_landmarks.landmark[12].x * screenWidth 
-            rs_y = results.pose_landmarks.landmark[12].y * screenHeight 
-            ls_x = results.pose_landmarks.landmark[11].x * screenWidth 
-            ls_y = results.pose_landmarks.landmark[11].y * screenHeight
-
-            dist1 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((rs_x,rs_y)))
-            dist2 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((ls_x,ls_y)))
-    
-            if (dist2>dist1) and (dist1<(self.scaleBar*0.65)):
-                self.whichHand = 'left' # mirrored
-            elif (dist2<dist1) and (dist2<(self.scaleBar*0.65)):
-                self.whichHand = 'right' # mirrored
+                dist1 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((rs_x,rs_y)))
+                dist2 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((ls_x,ls_y)))
+        
+                if (dist2>dist1) and (dist1<(self.scaleBar*0.65)):
+                    self.whichHand = 'left' # mirrored
+                elif (dist2<dist1) and (dist2<(self.scaleBar*0.65)):
+                    self.whichHand = 'right' # mirrored
+            except Exception as e:
+                pass
     
     def determineHandOrientation(self,screenWidth,screenHeight):
         
@@ -166,7 +223,7 @@ class ChoreographicInterface:
             pl_y = results.right_hand_landmarks.landmark[20].y * screenHeight 
             ttl_x = results.right_hand_landmarks.landmark[4].x * screenWidth  
             ttl_y = results.right_hand_landmarks.landmark[4].y * screenHeight 
-       
+    
             if self.action == 'track':
                 if (self.whichHand == 'right'):
                     handSpan = np.linalg.norm(np.array((pr_x,pr_y))-np.array((ttr_x,ttr_y)))
@@ -179,10 +236,9 @@ class ChoreographicInterface:
                 else: 
                     self.handChopOrientation = False
 
-    def initPoseClasssifier(self,fileName,setMaps):
+    def initPoseClasssifier(self,fileName):
         with open(fileName, 'rb') as file:
             self.logReg = pickle.load(file)
-        return setMaps[fileName]
 
     def classifyPose(self,img,classMap,gestureMap):
         outputFrame = img.copy() # maybe delete
@@ -195,12 +251,11 @@ class ChoreographicInterface:
             poseLandmarkEmbedding = embed(poseLandmarks)
             poseLandmarkEmbeddingFlattened = poseLandmarkEmbedding.flatten()
             classification = self.logReg.predict(poseLandmarkEmbeddingFlattened.astype(float).reshape(1,-1))
-            gesture = class_map[classification[0]]
-            self.action = gesture_map[gesture]
-
+            gesture = classMap[classification[0]]
+            self.action = gestureMap[gesture]
+            return self.action
 
     def logAction(self):
-
         if mode(self.missingLandmarkBuffer) == True or self.action == None:
             self.action = 'neutral' # TODO check this
         if self.action == 'track':
@@ -211,66 +266,154 @@ class ChoreographicInterface:
         self.modalAction = mode(self.modalActionList)
         return self.modalAction # TODO review
 
-    def executeAction(self):
-        if (self.modalAction == 'refresh' and self.lastExecutedAction != 'refresh'):
-            pyautogui.hotkey('command', 'r')
-            # pyautogui.hotkey('ctrl', 'r') #for LB
-            zoomLevel = 0 
-        elif (self.modalAction == 'zoomIn'):
-            #pyautogui.hotkey('command', '+')
-            pyautogui.scroll(5)
-            if zoomLevel > -10:
-                zoomLevel -= totalTime
-                audioParam = zoomLevel 
-        elif (self.modalAction == 'zoomOut'):
-            #pyautogui.hotkey('command', '-')
-            pyautogui.scroll(-5)
-            if zoomLevel < 10:
-                zoomLevel += totalTime
-                audioParam = zoomLevel 
-        elif (self.modalAction == 'scrollUp'):
-            pyautogui.scroll(5)
-            # pyautogui.scroll(50) # for LB
-            # pyautogui.press('right') #Giulia
-        elif (self.modalAction == 'scrollDown'):
-            pyautogui.scroll(-5)
-            # pyautogui.scroll(50) # for LB
-            # pyautogui.press('left') #Giulia
+    def executeAction(self): # TODO: check why these are not returning values. 
+        try:
+          
+            if (self.modalAction == 'refresh' and self.lastExecutedAction != 'refresh'):
+                #pyautogui.hotkey('command', 'r')
+                pyautogui.hotkey('ctrl', 'r') #for LB
+                self.modalAction[0][0] = 'REFRESHED WORKED'
+                return 'REFRESH!'
+            elif (self.modalAction[0][0] == 'zoomIn'):
+                #pyautogui.hotkey('command', '+')
+                pyautogui.scroll(5)
+                return 'ZOOMIN!'
+            elif (self.modalAction[0][0] == 'zoomOut'):
+                #pyautogui.hotkey('command', '-')
+                pyautogui.scroll(-5)
+                return 'ZOOMOUT!'
+            elif (self.modalAction[0][0] == 'scrollUp'):
+                pyautogui.scroll(5)
+                # pyautogui.scroll(50) # for LB
+                # pyautogui.press('right') #Giulia
+                return 'SCROLLUP!'
+            elif (self.modalAction[0][0] == 'scrollDown'):
+                pyautogui.scroll(-5)
+                # pyautogui.scroll(50) # for LB
+                # pyautogui.press('left') #Giulia
+                return 'SCROLLDOWN!'
+            self.lastExecutedAction = self.modalAction[0][0]
+        except Exception as e:
+            return e
 
     # TODO FINISH
-    def mouseSelect(self):
+    def mouseSelect(self): # currently not in use...
         
         if self.modalAction == 'track':
             select_threshold = self.scaleBar*0.15
             if self.whichHand == 'right':
-                select_distance = np.linalg.norm(np.array((x_indexL,y_indexL))-np.array((x_wristR,y_wristR)))
+                select_distance = np.linalg.norm(np.array((self.landmarksOfInterest['leftIndex'].x * screenWidth ,self.landmarksOfInterest['leftIndex'].y * screenHeight))-np.array((self.landmarksOfInterest['rightWrist'].x * screenWidth ,self.landmarksOfInterest['rightWrist'].y * screenHeight)))
             if self.whichHand == 'left':
-                select_distance = np.linalg.norm(np.array((x_indexR,y_indexR))-np.array((x_wristL,y_wristL)))
-            
+                select_distance = np.linalg.norm(np.array((self.landmarksOfInterest['rightIndex'].x * screenWidth ,self.landmarksOfInterest['rightIndex'].y * screenHeight))-np.array((self.landmarksOfInterest['leftWrist'].x * screenWidth ,self.landmarksOfInterest['leftWrist'].y * screenHeight)))
             if select_distance < select_threshold:
-                # print('select True added to buffer')
                 self.clickBuffer.append(True)
             elif select_distance > select_threshold:
                 self.clickBuffer.append(False)
-    
-            if mode(self.clickBuffer) == True:
-                if click == False:
-                    click = True
+
+            if mode(self.clickBuffer) == True: # TODO make sure it doesn't rapid fire
                     pyautogui.click(button='left')
                     #sonification.sendOSCMessage('select','')
                     print('clicked!')
-            elif click == True:
-                click = False
+            #elif click == True:
+            #    click = False
                 #sonification.sendOSCMessage('deselect','')
+            return select_threshold, select_distance
+
+    def moveDragMouse(self,screenWidth,screenHeight):
+
+        try:
+
+            
+            if (self.modalAction[0][0]=='track'):
+
+                # DRAG AND MOVE 
+                
+                #armLength = self.scaleBar*2 # Vitruvian adjustment #
+                drag_threshold = self.scaleBar*0.15
+
+                # TODO make landmarks of interest a nested dictionary with 'left' and 'right'keys so we dont have to duplicate here
+                if self.whichHand == 'right':
+                    wristX = self.landmarksOfInterest['rightWrist'].x*screenWidth
+                    wristY = self.landmarksOfInterest['rightWrist'].y*screenHeight
+                    thumbX = self.landmarksOfInterest['rightThumb'].x*screenWidth
+                    thumbY = self.landmarksOfInterest['rightThumb'].y*screenHeight
+                    indexX =  self.landmarksOfInterest['rightIndex'].x*screenWidth
+                    indexY = self.landmarksOfInterest['rightIndex'].y*screenHeight
+                    shoulderX = self.landmarksOfInterest['rightShoulder'].x * screenWidth
+                    shoulderY = self.landmarksOfInterest['rightShoulder'].y * screenHeight
+                else:
+                    wristX = self.landmarksOfInterest['leftWrist'].x*screenWidth
+                    wristY = self.landmarksOfInterest['leftWrist'].y*screenHeight
+                    thumbX = self.landmarksOfInterest['leftThumb'].x*screenWidth
+                    thumbY = self.landmarksOfInterest['leftThumb'].y*screenHeight
+                    indexX =  self.landmarksOfInterest['leftIndex'].x*screenWidth
+                    indexY = self.landmarksOfInterest['leftIndex'].y*screenHeight
+                    shoulderX = self.landmarksOfInterest['leftShoulder'].x * screenWidth
+                    shoulderY = self.landmarksOfInterest['leftShoulder'].y * screenHeight
+                
+                
+                # reach logic
+                screenDistanceTop = shoulderY # distance to top extreme of screen
+                screenDistanceBottom = screenHeight-shoulderY # distance to top extreme of screen
+                screenDistanceRight = screenWidth-shoulderX # distance to right extreeme of screen
+                screenDistanceLeft = shoulderX # distance to right extreeme of screen
+                reachAmountY = (wristY-shoulderY)/armLength # neg if hand above shoulder
+                reachAmountX = (wristX-shoulderX)/armLength # pos if hand right of shoulder
+
+                if (reachAmountY<0) and (reachAmountX>0): # hand up,right
+                    posY = screenDistanceTop*(-1)*reachAmountY 
+                    posX = screenDistanceRight*reachAmountX
+                elif (reachAmountY>0) and (reachAmountX>0): # hand down,right
+                    posY = screenDistanceBottom*reachAmountY
+                    posX = screenDistanceRight*reachAmountX
+                elif (reachAmountY<0) and (reachAmountX<0): # hand up,left
+                    posY = screenDistanceTop*(-1)*reachAmountY 
+                    posX = screenDistanceLeft*(-1)*reachAmountXß
+                elif (reachAmountY>0) and (reachAmountX>0): # hand down,left
+                    posY = screenDistanceBottom*reachAmountY
+                    posX = screenDistanceLeft*(-1)*reachAmountX
+
+                grab_distance = np.linalg.norm(np.array((thumbX,thumbY))-np.array((indexX,indexY)))
+                if grab_distance > drag_threshold: # adjust
+                    self.modalMouseButtonList.append('up')
+                elif grab_distance < drag_threshold:
+                    self.modalMouseButtonList.append('down')
+
+                if mode(self.modalMouseButtonList)[0][0] == 'up': # adjust
+                    if self.mouseDown == True:
+                        #pyautogui.mouseUp()
+                        print('MOUSEUP!')
+                        self.mouseDown = False
+                        #sonification.sendMouseDown(mouse_down)
+                    pyautogui.moveTo(posX, posY,0) # Move cursor
+                elif mode(self.modalMouseButtonList)[0][0] == 'down':
+                    if self.mouseDown == False:
+                        #pyautogui.mouseDown()
+                        pyautogui.click()
+                        print('MOUSEDOWN!')
+                        self.mouseDown = True
+                        #sonification.sendMouseDown(mouse_down)
+                    pyautogui.dragTo(posX, posY,0,button='left') # Drag cursor
+                
+                if self.whichHand == 'right':
+                    cursorX = self.landmarksOfInterest['rightWrist'].x*screenWidth
+                    cursorY = self.landmarksOfInterest['rightWrist'].x*screenHeight
+                else:
+                    cursorX = self.landmarksOfInterest['leftWrist'].x*screenWidth
+                    cursorY = self.landmarksOfInterest['leftWrist'].x*screenHeight
+                
+                
+        except Exception as e:
+            #print(e)
+            pass
+        
+            
 
 
-    def moveDrafMouse(self):
+               
+
+
+
+        
+
        
-        # Vitruvian adjustment #
-        armLength = self.scaleBar*2
-
-    
-
-
-
-
