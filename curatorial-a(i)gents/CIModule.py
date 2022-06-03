@@ -21,7 +21,7 @@ import pyautogui, sys
 import time
 import keyboard
 from scipy.stats import mode
-#import sonification #CI #sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
+import sonification #CI #sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
 
 # TODO - fold this into CI class 
 class Vector2:
@@ -45,8 +45,9 @@ class ChoreographicInterface:
     """
 
     def __init__(self,detectionCon=0.5,trackingCon=0.5,scaleBar=0.0,holisticLandmarks=None,
+                currentCoords = np.nan, lastCoords = [1,1],
                  whichHand='right',mouseDown=False,resetHand=False,maxDistanceWristIndex=0.0,modalMouseButtonList=collections.deque(['up']*5,maxlen=5),modalMouseState='up',clickBuffer=collections.deque([False]*10,maxlen=10),handChopOrientation=False,
-                 action='neutral',execute=False,lastExecutedAction='neutral',modalActionList=collections.deque(['neutral']*10,maxlen=10),modalAction='neutral',missingLandmarkBuffer=collections.deque([False]* 10, maxlen=10),logReg=None,
+                 action='neutral',execute=False,lastExecutedAction='track',modalActionList=collections.deque(['neutral']*10,maxlen=10),modalAction='neutral',missingLandmarkBuffer=collections.deque([False]* 10, maxlen=10),logReg=None,
                  landmarksOfInterest={'rightWrist':np.nan,'leftWrist':np.nan,'rightThumb':np.nan,'leftThumb':np.nan,'rightIndex':np.nan,'leftIndex':np.nan,'rightShoulder':np.nan,'leftShoulder':np.nan,'faceCenter':np.nan,'rightEar':np.nan,'leftEar':np.nan}):
 
         """
@@ -97,6 +98,9 @@ class ChoreographicInterface:
         :param : TODO-DESCRIBE
         """
         self.landmarksOfInterest = landmarksOfInterest
+
+        self.currentCoords = currentCoords
+        self.lastCoords = lastCoords
 
     def findHolisticLandmarks(self, img):
         """
@@ -273,26 +277,40 @@ class ChoreographicInterface:
                 #pyautogui.hotkey('command', 'r')
                 pyautogui.hotkey('ctrl', 'r') #for LB
                 self.modalAction[0][0] = 'REFRESHED WORKED'
+                sonification.sendOSCMessage('refresh','')
                 return 'REFRESH!'
             elif (self.modalAction[0][0] == 'zoomIn'):
                 #pyautogui.hotkey('command', '+')
                 pyautogui.scroll(5)
+                sonification.sendOSCMessage('zoomIn','')
                 return 'ZOOMIN!'
             elif (self.modalAction[0][0] == 'zoomOut'):
                 #pyautogui.hotkey('command', '-')
                 pyautogui.scroll(-5)
+                sonification.sendOSCMessage('zoomOut','')
                 return 'ZOOMOUT!'
             elif (self.modalAction[0][0] == 'scrollUp'):
                 pyautogui.scroll(5)
                 # pyautogui.scroll(50) # for LB
                 # pyautogui.press('right') #Giulia
+                sonification.sendOSCMessage('scrollUp','')
                 return 'SCROLLUP!'
             elif (self.modalAction[0][0] == 'scrollDown'):
                 pyautogui.scroll(-5)
                 # pyautogui.scroll(50) # for LB
                 # pyautogui.press('left') #Giulia
+                sonification.sendOSCMessage('scrollDown','')
                 return 'SCROLLDOWN!'
+            # print(f"{} = {}")
+            if self.modalAction[0][0] != self.lastExecutedAction:
+                sonification.sendOSCMessage('changed', '')
+                print('ACTION CHANGED')
+
+                if (self.modalAction[0][0] == 'track'):
+                    sonification.sendOSCMessage('trackStart','')
+
             self.lastExecutedAction = self.modalAction[0][0]
+
         except Exception as e:
             return e
 
@@ -339,8 +357,8 @@ class ChoreographicInterface:
                     thumbY = self.landmarksOfInterest['rightThumb'].y*screenHeight
                     indexX =  self.landmarksOfInterest['rightIndex'].x*screenWidth
                     indexY = self.landmarksOfInterest['rightIndex'].y*screenHeight
-                    shoulderX = self.landmarksOfInterest['rightShoulder'].x * screenWidth
-                    shoulderY = self.landmarksOfInterest['rightShoulder'].y * screenHeight
+                    #shoulderX = self.landmarksOfInterest['rightShoulder'].x * screenWidth
+                    #shoulderY = self.landmarksOfInterest['rightShoulder'].y * screenHeight
                 else:
                     wristX = self.landmarksOfInterest['leftWrist'].x*screenWidth
                     wristY = self.landmarksOfInterest['leftWrist'].y*screenHeight
@@ -348,31 +366,31 @@ class ChoreographicInterface:
                     thumbY = self.landmarksOfInterest['leftThumb'].y*screenHeight
                     indexX =  self.landmarksOfInterest['leftIndex'].x*screenWidth
                     indexY = self.landmarksOfInterest['leftIndex'].y*screenHeight
-                    shoulderX = self.landmarksOfInterest['leftShoulder'].x * screenWidth
-                    shoulderY = self.landmarksOfInterest['leftShoulder'].y * screenHeight
+                    #shoulderX = self.landmarksOfInterest['leftShoulder'].x * screenWidth
+                    #shoulderY = self.landmarksOfInterest['leftShoulder'].y * screenHeight
                 
-                
+                '''
                 # reach logic
-                screenDistanceTop = shoulderY # distance to top extreme of screen
-                screenDistanceBottom = screenHeight-shoulderY # distance to top extreme of screen
+                screenDistanceTop = screenHeight-shoulderY # distance to top extreme of screen
+                screenDistanceBottom = shoulderY # distance to top extreme of screen
                 screenDistanceRight = screenWidth-shoulderX # distance to right extreeme of screen
                 screenDistanceLeft = shoulderX # distance to right extreeme of screen
-                reachAmountY = (wristY-shoulderY)/armLength # neg if hand above shoulder
+                reachAmountY = (wristY-shoulderY)/armLength # pos if hand above shoulder
                 reachAmountX = (wristX-shoulderX)/armLength # pos if hand right of shoulder
 
-                if (reachAmountY<0) and (reachAmountX>0): # hand up,right
-                    posY = screenDistanceTop*(-1)*reachAmountY 
+                if (reachAmountY>0) and (reachAmountX>0):
+                    posY = screenDistanceTop*reachAmountY
                     posX = screenDistanceRight*reachAmountX
-                elif (reachAmountY>0) and (reachAmountX>0): # hand down,right
-                    posY = screenDistanceBottom*reachAmountY
+                elif (reachAmountY<0) and (reachAmountX>0):
+                    posY = screenDistanceTop*-1*reachAmountY
                     posX = screenDistanceRight*reachAmountX
-                elif (reachAmountY<0) and (reachAmountX<0): # hand up,left
-                    posY = screenDistanceTop*(-1)*reachAmountY 
-                    posX = screenDistanceLeft*(-1)*reachAmountXß
-                elif (reachAmountY>0) and (reachAmountX>0): # hand down,left
-                    posY = screenDistanceBottom*reachAmountY
-                    posX = screenDistanceLeft*(-1)*reachAmountX
+                elif (reachAmountY>0) and (reachAmountX<0):
+                    posY = screenDistanceTop*-1*reachAmountY
+                    posX = screenDistanceRight*reachAmountX
+                '''
 
+                
+                
                 grab_distance = np.linalg.norm(np.array((thumbX,thumbY))-np.array((indexX,indexY)))
                 if grab_distance > drag_threshold: # adjust
                     self.modalMouseButtonList.append('up')
@@ -384,16 +402,27 @@ class ChoreographicInterface:
                         #pyautogui.mouseUp()
                         print('MOUSEUP!')
                         self.mouseDown = False
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.moveTo(posX, posY,0) # Move cursor
+                        sonification.sendMouseUp()
+                    pyautogui.moveTo(wristX, wristY,0) # Move cursor
                 elif mode(self.modalMouseButtonList)[0][0] == 'down':
                     if self.mouseDown == False:
                         #pyautogui.mouseDown()
                         pyautogui.click()
                         print('MOUSEDOWN!')
                         self.mouseDown = True
-                        #sonification.sendMouseDown(mouse_down)
-                    pyautogui.dragTo(posX, posY,0,button='left') # Drag cursor
+                        sonification.sendMouseDown()
+                #pyautogui.moveTo(wristX, wristY)
+                    #pyautogui.dragTo(wristX, wristY,0,button='left') # Drag cursor
+
+                if wristX is not None and wristX > 0:
+                    self.currentCoords = [wristX, wristY]#change to final
+                    cursorDifference = math.sqrt( ((self.currentCoords[0]-self.lastCoords[0])**2)+((self.currentCoords[1]-self.lastCoords[1])**2) )
+                    cursorAccel = cursorDifference
+                    self.lastCoords = self.currentCoords
+                    sonification.sendOSCMessage('track', wristX)
+                    sonification.sendXAccelerationOSC(cursorAccel)
+
+                '''
                 
                 if self.whichHand == 'right':
                     cursorX = self.landmarksOfInterest['rightWrist'].x*screenWidth
@@ -401,7 +430,7 @@ class ChoreographicInterface:
                 else:
                     cursorX = self.landmarksOfInterest['leftWrist'].x*screenWidth
                     cursorY = self.landmarksOfInterest['leftWrist'].x*screenHeight
-                
+                '''
                 
         except Exception as e:
             #print(e)
