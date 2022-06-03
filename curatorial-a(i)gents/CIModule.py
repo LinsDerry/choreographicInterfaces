@@ -297,15 +297,26 @@ class ChoreographicInterface:
                 pyautogui.scroll(5)
                 # pyautogui.scroll(50) # for LB
                 # pyautogui.press('right') #Giulia
+                sonification.sendOSCMessage('scrollUp','')
                 return 'SCROLLUP!'
             elif (self.modalAction[0][0] == 'scrollDown'):
                 pyautogui.scroll(-5)
                 # pyautogui.scroll(50) # for LB
                 # pyautogui.press('left') #Giulia
+                sonification.sendOSCMessage('scrollDown','')
                 return 'SCROLLDOWN!'
+
+            if self.modalAction[0][0] != self.lastExecutedAction:
+                sonification.sendOSCMessage('changed', '')
+                print('ACTION CHANGED')
+                if (self.modalAction[0][0] == 'track'):
+                    sonification.sendOSCMessage('trackStart','')
+
             self.lastExecutedAction = self.modalAction[0][0]
+
         except Exception as e:
             return e
+
 
     # TODO FINISH
     def mouseSelect(self): # currently not in use...
@@ -322,12 +333,10 @@ class ChoreographicInterface:
                 self.clickBuffer.append(False)
 
             if mode(self.clickBuffer) == True: # TODO make sure it doesn't rapid fire
-                    pyautogui.click(button='left')
-                    #sonification.sendOSCMessage('select','')
-                    print('clicked!')
-            #elif click == True:
-            #    click = False
-                #sonification.sendOSCMessage('deselect','')
+                pyautogui.click(button='left')
+                sonification.sendOSCMessage('select','')
+                print('clicked!')
+                
             return select_threshold, select_distance
 
     def moveDragMouse(self,screenWidth,screenHeight):
@@ -393,6 +402,7 @@ class ChoreographicInterface:
                         # pyautogui.mouseUp()
                         print('MOUSEUP!')
                         self.mouseDown = False
+                        sonification.sendMouseUp()
                         #sonification.sendMouseDown(mouse_down)
                     pyautogui.moveTo(wristX+addX, wristY+addY) # Move cursor
                 elif mode(self.modalMouseButtonList)[0][0] == 'down':
@@ -401,6 +411,7 @@ class ChoreographicInterface:
                         pyautogui.click()
                         print('MOUSEDOWN!')
                         self.mouseDown = True
+                        sonification.sendMouseDown()
                         #sonification.sendMouseDown(mouse_down)
                         time.sleep(1)
                     pyautogui.dragTo(wristX+addX, wristY+addY,button='left') # Drag cursor          
@@ -410,8 +421,8 @@ class ChoreographicInterface:
                     cursorDifference = math.sqrt( ((self.currentCoords[0]-self.lastCoords[0])**2)+((self.currentCoords[1]-self.lastCoords[1])**2) )
                     cursorAccel = cursorDifference
                     self.lastCoords = self.currentCoords
-                    #sonification.sendOSCMessage('track', wristX+addX)
-                    #sonification.sendXAccelerationOSC(cursorAccel)
+                    sonification.sendOSCMessage('track', wristX+addX)
+                    sonification.sendXAccelerationOSC(cursorAccel)
 
                 # if self.whichHand == 'right':
                 #     cursorX = self.landmarksOfInterest['rightWrist'].x*screenWidth
@@ -422,9 +433,3 @@ class ChoreographicInterface:
 
         except Exception as e:
             pass
-
-
-
-        
-
-       
