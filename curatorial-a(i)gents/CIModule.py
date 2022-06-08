@@ -1,10 +1,10 @@
 """
 Choreograhic Interface Module
-By: Lins Derry, Jordan Kruguer, Maximilian Mueller 
+By: Lins Derry, Jordan Kruguer, Maximilian Mueller
 Metalab @ Harvard
 """
 
-## TODO - FIX DEQUE --> 
+## TODO - FIX DEQUE -->
 
 import cv2
 import mediapipe as mp
@@ -23,7 +23,7 @@ import keyboard
 from scipy.stats import mode
 import sonification #CI #sonification Module - Author(s): Maximilian Mueller (UNCOMMENT FOR USE)
 
-# TODO - fold this into CI class 
+# TODO - fold this into CI class
 class Vector2:
     def __init__(self,x,y):
         self.x = x
@@ -41,7 +41,7 @@ def lerp(v1, v2, time): #time is value between 0 and 1
 class ChoreographicInterface:
     """
     Estimates pose, hand, and face points on a human body using the mediapipe library.
-    Uses landmarks to produce choreographic interface gestures and actions. 
+    Uses landmarks to produce choreographic interface gestures and actions.
     """
 
     def __init__(self,detectionCon=0.5,trackingCon=0.5,scaleBar=0.0,holisticLandmarks=None,
@@ -74,12 +74,12 @@ class ChoreographicInterface:
 
         self.currentCoords = currentCoords
         self.lastCoords = lastCoords
-        
+
         """
         :params CIHands
         :param : TODO-DESCRIBE
         """
-        
+
         self.whichHand = whichHand
         self.mouseDown = mouseDown
         self.resetHand = resetHand
@@ -115,12 +115,12 @@ class ChoreographicInterface:
         """
         img = cv2.cvtColor(cv2.flip(img,1),cv2.COLOR_BGR2RGB)
         img.flags.writeable = False
-        results = self.holistic.process(img) 
+        results = self.holistic.process(img)
         self.holisticLandmarks = results
-        img.flags.writeable = True 
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR) 
-        return img 
-    
+        img.flags.writeable = True
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        return img
+
     def updateLandmarksOfInterest(self):
         # TODO FINISH
         results = self.holisticLandmarks
@@ -182,57 +182,57 @@ class ChoreographicInterface:
         results = self.holisticLandmarks
         if results is not None:
             try:
-                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth 
-                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight 
-                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth 
-                ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight 
+                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth
+                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight
+                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth
+                ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight
                 self.scaleBar = np.linalg.norm(np.array((rs_x,rs_y))-np.array((ls_x,ls_y)))
             except Exception as e:
                 pass
 
     def determineHandedness(self,screenWidth,screenHeight):
-        
+
         results = self.holisticLandmarks
         if results is not None:
             try:
-                fc_x = self.landmarksOfInterest['faceCenter'].x * screenWidth 
-                fc_y = self.landmarksOfInterest['faceCenter'].y * screenHeight 
-                re_x = self.landmarksOfInterest['rightEar'].x * screenWidth 
-                re_y = self.landmarksOfInterest['rightEar'].y * screenHeight 
-                le_x = self.landmarksOfInterest['leftEar'].x * screenWidth 
-                le_y = self.landmarksOfInterest['leftEar'].y * screenHeight 
+                fc_x = self.landmarksOfInterest['faceCenter'].x * screenWidth
+                fc_y = self.landmarksOfInterest['faceCenter'].y * screenHeight
+                re_x = self.landmarksOfInterest['rightEar'].x * screenWidth
+                re_y = self.landmarksOfInterest['rightEar'].y * screenHeight
+                le_x = self.landmarksOfInterest['leftEar'].x * screenWidth
+                le_y = self.landmarksOfInterest['leftEar'].y * screenHeight
 
                 # TODO make this abstracted so we don't have to repeat this
-                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth 
-                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight 
-                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth 
+                rs_x = self.landmarksOfInterest['rightShoulder'].x * screenWidth
+                rs_y = self.landmarksOfInterest['rightShoulder'].y * screenHeight
+                ls_x = self.landmarksOfInterest['leftShoulder'].x * screenWidth
                 ls_y = self.landmarksOfInterest['leftShoulder'].y * screenHeight
 
                 dist1 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((rs_x,rs_y)))
                 dist2 = np.linalg.norm(np.array((fc_x,fc_y))-np.array((ls_x,ls_y)))
-        
-                if (dist2>dist1) and (dist1<(self.scaleBar*0.65)): # 0.3 for LB
+
+                if (dist2>dist1) and (dist1<(self.scaleBar*0.65)): # 0.3 for LB / 0.65 for mac
                     self.whichHand = 'left' # mirrored
-                elif (dist2<dist1) and (dist2<(self.scaleBar*0.65)): # 0.3 for LB
+                elif (dist2<dist1) and (dist2<(self.scaleBar*0.65)): # 0.3 for LB / 0.65 for mac
                     self.whichHand = 'right' # mirrored
             except Exception as e:
                 pass
-    
+
     def determineHandOrientation(self,screenWidth,screenHeight):
-        
+
         results = self.holisticLandmarks
         if results is not None:
 
             pr_x = results.left_hand_landmarks.landmark[20].x * screenWidth
-            pr_y = results.left_hand_landmarks.landmark[20].y * screenHeight 
+            pr_y = results.left_hand_landmarks.landmark[20].y * screenHeight
             ttr_x = results.left_hand_landmarks.landmark[4].x * screenWidth
             ttr_y = results.left_hand_landmarks.landmark[4].y * screenHeight
-     
-            pl_x = results.right_hand_landmarks.landmark[20].x * screenWidth 
-            pl_y = results.right_hand_landmarks.landmark[20].y * screenHeight 
-            ttl_x = results.right_hand_landmarks.landmark[4].x * screenWidth  
-            ttl_y = results.right_hand_landmarks.landmark[4].y * screenHeight 
-    
+
+            pl_x = results.right_hand_landmarks.landmark[20].x * screenWidth
+            pl_y = results.right_hand_landmarks.landmark[20].y * screenHeight
+            ttl_x = results.right_hand_landmarks.landmark[4].x * screenWidth
+            ttl_y = results.right_hand_landmarks.landmark[4].y * screenHeight
+
             if self.action == 'track':
                 if (self.whichHand == 'right'):
                     handSpan = np.linalg.norm(np.array((pr_x,pr_y))-np.array((ttr_x,ttr_y)))
@@ -241,8 +241,8 @@ class ChoreographicInterface:
                 # TODO Review this logic
                 normalizedHandSpan = handSpan / self.scaleBar
                 if normalizedHandSpan < .2:
-                    self.handChopOrientation = True 
-                else: 
+                    self.handChopOrientation = True
+                else:
                     self.handChopOrientation = False
 
     def initPoseClasssifier(self,fileName):
@@ -275,52 +275,53 @@ class ChoreographicInterface:
         self.modalAction = mode(self.modalActionList)
         return self.modalAction # TODO review
 
-    def executeAction(self): # TODO: check why these are not returning values. 
+
+    def executeAction(self): # TODO: check why these are not returning values.
         try:
-          
-            if (self.modalAction == 'refresh' and self.lastExecutedAction != 'refresh'):
-                pyautogui.hotkey('command', 'r')
-                # pyautogui.hotkey('ctrl', 'r') #for LB
-                self.modalAction[0][0] = 'refresh'
-                sonification.sendOSCMessage('refresh','')
-                return 'REFRESH!'
+
+            if (self.modalAction[0][0] == 'refresh' and self.lastExecutedAction != 'refresh'):
+                pyautogui.hotkey('command', 'r') #for mac
+                #pyautogui.hotkey('ctrl', 'r') #for LB
+                # return 'REFRESH!'
             elif (self.modalAction[0][0] == 'zoomIn'):
                 #pyautogui.hotkey('command', '+')
-                pyautogui.scroll(5)
-                sonification.sendOSCMessage('zoomIn','')
-                return 'ZOOMIN!'
+                pyautogui.scroll(1)
+                # return 'ZOOMIN!'
             elif (self.modalAction[0][0] == 'zoomOut'):
                 #pyautogui.hotkey('command', '-')
-                pyautogui.scroll(-5)
-                return 'ZOOMOUT!'
+                pyautogui.scroll(-1)
+                # return 'ZOOMOUT!'
             elif (self.modalAction[0][0] == 'scrollUp'):
-                pyautogui.scroll(5)
-                # pyautogui.scroll(50) # for LB
-                # pyautogui.press('right') #Giulia
-                sonification.sendOSCMessage('scrollUp','')
-                return 'SCROLLUP!'
+                pyautogui.scroll(1) #for mac
+                #pyautogui.scroll(50) # for LB
+                # return 'SCROLLUP!'
             elif (self.modalAction[0][0] == 'scrollDown'):
-                pyautogui.scroll(-5)
-                # pyautogui.scroll(50) # for LB
-                # pyautogui.press('left') #Giulia
-                sonification.sendOSCMessage('scrollDown','')
-                return 'SCROLLDOWN!'
-
+                pyautogui.scroll(-1) #for mac
+                #pyautogui.scroll(50) # for LB
+                # return 'SCROLLDOWN!'
+            # Next 2 elifs are for "This Recommendation System is Broken"
+            elif (self.modalAction[0][0] == 'right' and self.lastExecutedAction != 'right'):
+                pyautogui.scroll(5)
+                pyautogui.press('right')
+                # return 'RIGHT!'
+            elif (self.modalAction[0][0] == 'left' and self.lastExecutedAction != 'left'):
+                pyautogui.press('left')
+                # return 'LEFT!'
             if self.modalAction[0][0] != self.lastExecutedAction:
                 sonification.sendOSCMessage('changed', '')
-                print('ACTION CHANGED')
+                # print('ACTION CHANGED')
                 if (self.modalAction[0][0] == 'track'):
                     sonification.sendOSCMessage('trackStart','')
 
             self.lastExecutedAction = self.modalAction[0][0]
 
         except Exception as e:
+            # print(e)
             return e
-
 
     # TODO FINISH
     def mouseSelect(self): # currently not in use...
-        
+
         if self.modalAction == 'track':
             select_threshold = self.scaleBar*0.15
             if self.whichHand == 'right':
@@ -336,7 +337,7 @@ class ChoreographicInterface:
                 pyautogui.click(button='left')
                 sonification.sendOSCMessage('select','')
                 print('clicked!')
-                
+
             return select_threshold, select_distance
 
     def moveDragMouse(self,screenWidth,screenHeight):
@@ -389,7 +390,7 @@ class ChoreographicInterface:
                     addY = screenDistanceTop*reachAmountY
                     addX = screenDistanceRight*-1*reachAmountX
 
-                
+
                 grab_distance = np.linalg.norm(np.array((thumbX,thumbY))-np.array((indexX,indexY)))
                 if grab_distance > drag_threshold: # adjust
                     self.modalMouseButtonList.append('up')
@@ -403,19 +404,16 @@ class ChoreographicInterface:
                         print('MOUSEUP!')
                         self.mouseDown = False
                         sonification.sendMouseUp()
-                        #sonification.sendMouseDown(mouse_down)
                     pyautogui.moveTo(wristX+addX, wristY+addY) # Move cursor
                 elif mode(self.modalMouseButtonList)[0][0] == 'down':
                     if self.mouseDown == False:
                         # pyautogui.mouseDown()
-                        pyautogui.click()
+                        pyautogui.click(interval=1)
                         print('MOUSEDOWN!')
                         self.mouseDown = True
                         sonification.sendMouseDown()
-                        #sonification.sendMouseDown(mouse_down)
-                        time.sleep(1)
-                    pyautogui.dragTo(wristX+addX, wristY+addY,button='left') # Drag cursor          
-                
+                    pyautogui.dragTo(wristX+addX, wristY+addY,button='left') # Drag cursor for "Surprise Machines" with closed hand
+
                 if wristX is not None and wristX > 0:
                     self.currentCoords = [wristX+addX, wristY+addY] #change to final
                     cursorDifference = math.sqrt( ((self.currentCoords[0]-self.lastCoords[0])**2)+((self.currentCoords[1]-self.lastCoords[1])**2) )
