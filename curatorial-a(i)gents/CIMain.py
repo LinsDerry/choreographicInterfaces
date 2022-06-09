@@ -7,30 +7,40 @@ import time
 # BGR code for mp_drawing
 lav = (178, 160, 187) 
 fuschia = (143, 18, 172)
-green = (75, 79, 33)
+green = (230, 255, 150)
 blue = (144, 59, 42)
-maroon = (54, 37, 122)
+red = (10, 75, 255)
 turquoise = (233, 206, 0)
-redOrange = (58, 45, 240)
-midnight = (49, 26, 29)
 white = (255, 255, 255)
 black = (0, 0, 0)
 lmColor = lav #default landmark color
 connColor = lmColor #cdefault connector color
 gesture_text = ''
-lmColor_map = {'refresh':blue,'zoomIn':turquoise,'zoomOut':fuschia,'scrollUp':green,'scrollDown':maroon,'track':turquoise,'neutral':white}
-connColor_map = {'refresh':white,'zoomIn':fuschia,'zoomOut':turquoise,'scrollUp':maroon,'scrollDown':green,'track':lav,'neutral':blue}
+lmColor_map = {'refresh':blue,'zoomIn':turquoise,'zoomOut':fuschia,'scrollUp':green,'scrollDown':red,'track':turquoise,'right':white,'left':white}
+connColor_map = {'refresh':white,'zoomIn':fuschia,'zoomOut':turquoise,'scrollUp':red,'scrollDown':green,'track':lav,'right':blue,'left':blue}
 rad = 4 # 2 for LB
 thick = 4 # 2 for LB
 
-
-settings = 'mac' # or lightbox
+# settings for cv2 visual feedback
+# settings[0] = x coordinate for beginning text
+# settings[1] = y coordinate for beginning text
+# settings[2] = text size
+#settings[3] = scale of feedback window (e.g., 0.4 is 40% screen width)
+settings = 'mac' # mac or lightbox
 if settings == 'mac':
-    settings = [5,150,4]
+    settings = [5,150,4,0.4]
+    # settings = [1000,150,4,0.4] #for video recording only
 elif settings == 'lightbox':
-    settings = [5,75,2.5] 
+    settings = [5,75,2.5,0.23]
 
 selection = 'HAMS-LB'
+
+# no neutral, with right hip and left hip for "This Recommendation System is Broken"
+#set_maps = {'HAMS-LB':{1:'circle',2:'handsShoulders',3:'sideT',4:'hips',5:'Vdown',6:'track',7:'hipL',8:'hipR'}}
+#classifiers = {'HAMS-LB':'011322_LogReg_pose_classifier_hipsincluded.pkl'} 
+#gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track','hipL':'left','hipR':'right'} # for set HAMS-LB
+#gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK','left':'LEFT','right':'RIGHT'} 
+#action = 'track'
 
 # no neutral
 set_maps = {'HAMS-LB':{1:'circle',2:'handsShoulders',3:'sideT',4:'hips',5:'Vdown',6:'track'}}
@@ -38,13 +48,6 @@ classifiers = {'HAMS-LB':'031322_LogReg_pose_classifier.pkl'}
 gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track'} # for set HAMS-LB
 gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK'} 
 action = 'track'
-
-# neutral
-#set_maps = {'HAMS-LB': {1:'neutral',2:'circle',3:'handsShoulders',4:'sideT',5:'hips',6:'Vdown',7:'track'}}
-#classifiers = {'HAMS-LB':'HAMS-LB_LogReg_pose_classifier.pkl'} # New set with universal 'track
-#gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track','neutral':'neutral'} # for set HAMS-LB
-#gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK','neutral':'NEUTRAL'} 
-action = 'neutral'
 
 # important stuff
 class_map = set_maps[str(selection)]
@@ -113,28 +116,39 @@ while cap.isOpened():
     # VIZ - TODO: add to module
     capWidth  = cap.get(3) # input frame width
     capHeight = cap.get(4) # input frame height
-    scale = 0.33 # Scale feedback 0.23 for Lightbox
+    scale = settings[3] # Scale feedback
     newCapWidth = int(screenWidth * (scale))
     newCapHeight = int(newCapWidth * capHeight / capWidth)
+    # bottom right default
     capX = screenWidth - newCapWidth - 5
     capY = screenHeight - newCapHeight - 33
+
+    # upper right for "This Rec." and "AIxquisite Corpse"
+    # capX = screenWidth - newCapWidth - 5
+    # capY = 5
+
+    # #bottom left for "A Flitting Atlas"
+    # capX = 5
+    # capY = screenHeight - newCapHeight - 33
+
     lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.pose_landmarks, lb_ci.mpHolsitic.POSE_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad))
     if lb_ci.whichHand == 'right':
             lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.left_hand_landmarks, lb_ci.mpHolsitic.HAND_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
     elif lb_ci.whichHand == 'left':
         lb_ci.mpDraw.draw_landmarks(image, lb_ci.holisticLandmarks.right_hand_landmarks, lb_ci.mpHolsitic.HAND_CONNECTIONS, lb_ci.mpDraw.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),lb_ci.mpDraw.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
     if lb_ci.mouseDown == True:
-            cv2.putText(image, 'SELECT',  (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+            cv2.putText(image, 'SELECT',  (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], black, 2, cv2.LINE_4)
     #elif click == True:
-    #    cv2.putText(image, 'SELECT', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+    #    cv2.putText(image, 'SELECT', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], black, 2, cv2.LINE_4)
     else:
-        cv2.putText(image, f'{gesture_text}', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], midnight, 2, cv2.LINE_4)
+        cv2.putText(image, f'{gesture_text}', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], black, 2, cv2.LINE_4)
+        # cv2.putText(image, 'TRACK', (settings[0], settings[1]), cv2.FONT_HERSHEY_DUPLEX, settings[2], black, 2, cv2.LINE_4) #for projects only using track and select
     cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
     cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
-    cv2.moveWindow('Choreographic Interface', capX,capY) # relocate feedback
+    cv2.moveWindow('Choreographic Interface', capX, capY) # relocate feedback
     if cv2.waitKey(5) & 0xFF == 27:
         break
 
-    print(f"Elapsed Time: {time.time()-start}")
+    # print(f"Elapsed Time: {time.time()-start}")
 
 cap.release()
