@@ -1,4 +1,4 @@
-import CIModuleMOD as ci
+import CIModule as ci
 import cv2
 import pyautogui
 import time
@@ -44,7 +44,7 @@ selection = 'HAMS-LB'
 
 # no neutral
 set_maps = {'HAMS-LB':{1:'circle',2:'handsShoulders',3:'sideT',4:'hips',5:'Vdown',6:'track'}}
-classifiers = {'HAMS-LB':'031322_LogReg_pose_classifier.pkl'} 
+classifiers = {'HAMS-LB':'./pose-set-pkl-files/031322_LogReg_pose_classifier.pkl'} 
 gesture_map = {'circle':'refresh','handsShoulders':'zoomIn','sideT':'zoomOut','hips':'scrollUp','Vdown':'scrollDown','track':'track'} # for set HAMS-LB
 gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK'} 
 action = 'track'
