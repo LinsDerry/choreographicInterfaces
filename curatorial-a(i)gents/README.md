@@ -12,6 +12,12 @@ The key elements of the CI refactor include the following files and elements:
 * logistic regresion .pkl file
 * sonification .py file designed for the integration of sound to interactions
 
+1) Open terminal.
+2) Clone repo
+3) Check that conda is installed using *conda --version*
+4) Create conda environment from .yml file using *conda env create -f CIENV.yml*
+5) cd to and run CIMain.py using *python3 CIMain.py*
+
 
 
 Authors: Jordan Kruguer, Lins Derry, Maximilian
