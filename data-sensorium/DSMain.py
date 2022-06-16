@@ -32,18 +32,19 @@ embed = pose_embedding.FullBodyPoseEmbedder() # for CI Module - pose embedder
 ## Defining global variables - user feedback ##
 
 # BGR code for mp_drawing
-lav = (178, 160, 187) 
-fuschia = (143, 18, 172)
-green = (75, 79, 33)
-blue = (144, 59, 42)
-maroon = (54, 37, 122)
-turquoise = (233, 206, 0)
-redOrange = (58, 45, 240)
-midnight = (49, 26, 29)
+floodC = (130, 93, 40) 
+stormC = (181, 167, 147)
+wildfireC = (40, 42, 130)
+earthquakeC = (74, 79, 32)
+volcanoC = (58, 45, 240)
+droughtC = (138, 124, 129)
+movementC = (61, 66, 92)
+xTempC = (182, 194, 79)
+lav = (178, 160, 187)
 white = (255, 255, 255)
 black = (0, 0, 0)
 
-lmColor = lav #default landmark color
+lmColor = white #default landmark color
 connColor = lmColor #cdefault connector color
 gesture_text = ''
 
@@ -53,9 +54,9 @@ set_maps = {'DS':{1:'cycle',2:'drought',3:'earthquake',4:'flood',5:'movement',6:
 classifiers = {'DS':'032522_LogReg_pose_classifier_DataSensorium.pkl'} # New set with universal 'track
 
 # Set maps for feedback
-#gesture_map_text = {'refresh':'REFRESH','zoomIn':'ZOOM IN','zoomOut':'ZOOM OUT','scrollUp':'SCROLL UP','scrollDown':'SCROLL DOWN','track':'TRACK','neutral':'NEUTRAL'} 
-#lmColor_map = {'refresh':blue,'zoomIn':turquoise,'zoomOut':fuschia,'scrollUp':green,'scrollDown':maroon,'track':turquoise,'neutral':white}
-#connColor_map = {'refresh':white,'zoomIn':fuschia,'zoomOut':turquoise,'scrollUp':maroon,'scrollDown':green,'track':lav,'neutral':blue}
+gesture_map_text = {'drought':'drought','earthquake':'earthquake','flood':'flood','movement':'mass movement','neutral':'','storm':'storm','volcano':'volcano','wildfire':'wildfire','xTemp':'extreme temperature','cycle':''} 
+lmColor_map = {'drought':droughtC,'earthquake':earthquakeC,'flood':floodC,'movement':movementC,'neutral':lav,'storm':stormC,'volcano':volcanoC,'wildfire':wildfireC,'xTemp':xTempC,'cycle':lav}
+connColor_map = {'drought':droughtC,'earthquake':earthquakeC,'flood':floodC,'movement':movementC,'neutral':lav,'storm':stormC,'volcano':volcanoC, 'wildfire':wildfireC,'xTemp':xTempC,'cycle':lav}
 
 ## Set/Map selection ##
 selection = 'DS'
@@ -159,13 +160,11 @@ with mp_holistic.Holistic(
             pass
 
 
-
-
-        
-   
-        #lmColor = lmColor_map[action]
-        #connColor = connColor_map[action]
-        gesture_text = action #gesture_map_text[action]
+        lmColor = lmColor_map[action]
+        connColor = connColor_map[action]
+        lmColor = lav
+        connColor = lav 
+        # gesture_text = gesture_map_text[action] #action
         #for the text, when making track active always only set to track if nothing else
     
 
@@ -175,8 +174,8 @@ with mp_holistic.Holistic(
         fps = 1 / totalTime
 
         ## Format User Feedback ... Position feedback bottom right corner (nudged (5, 33) to look just right on MacBook Air) ##
-        rad = 4
-        thick = 3
+        rad = 2
+        thick = 4
 
         mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, mp_drawing.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad),mp_drawing.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad))
         mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=connColor, thickness=thick, circle_radius=rad),mp_drawing.DrawingSpec(color=lmColor, thickness=thick, circle_radius=rad))
@@ -185,7 +184,7 @@ with mp_holistic.Holistic(
         
         capWidth  = cap.get(3) # input frame width
         capHeight = cap.get(4) # input frame height
-        scale = 0.75 # Scale feedback 0.23 for Lightbox
+        scale = 0.4 # Scale feedback 0.23 for Lightbox
         newCapWidth = int(screenWidth * (scale))
         newCapHeight = int(newCapWidth * capHeight / capWidth)
 
@@ -194,9 +193,7 @@ with mp_holistic.Holistic(
         #cv2.putText(image, f"FPS: {int(fps)}", (20,120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2) # provide feedback on current FPS
         
         # Mac
-        cv2.putText(image, f'{gesture_text}', (5, 150), cv2.FONT_HERSHEY_DUPLEX, 4, midnight, 2, cv2.LINE_4)
-        # Lightbox
-        # cv2.putText(image, f'{gesture_text}', (5, 75), cv2.FONT_HERSHEY_DUPLEX, 2.5, midnight, 2, cv2.LINE_4)
+        # cv2.putText(image, f'{gesture_text}', (10, 850), cv2.FONT_HERSHEY_DUPLEX, 4, white, 2, cv2.LINE_4)
 
         cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
         cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
