@@ -1,6 +1,0 @@
-0 neutral
-1 track
-2 select
-3 scrlDn
-4 scrlUp
-5 start

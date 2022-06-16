@@ -1,4 +1,0 @@
-0 select
-1 scrlDn
-2 scrlUp
-3 start
