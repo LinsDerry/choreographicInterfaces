@@ -1,13 +1,5 @@
 # choreographicInterfaces
 
-## Authors 
- - [Lins Derry](https://github.com/LinsDerry) - Theory, Choreography, CI Code 
- - [Jordan Kruguer](https://github.com/jlkruguer) - CI Code
- - [Maximilian Mueller] - Sonification Code
- 
-By Jordan Kruguer and Lins Derry, plus sonification code by Maximilian Mueller
-
-@Jordan, thoughts on how to appropriately credit Max?
 
 --- What you'll find in the choreographicInterfaces repo ---
 
@@ -36,6 +28,12 @@ The utility repo includes CoLabs used for customizing the curatorial-a(i)gents p
 5. Export classifier to a .pkl file to be loaded into Python code base
 
 Note the CoLabs used can be found in the utility rep
+
+
+## Authors 
+ - [Lins Derry](https://github.com/LinsDerry) - Theory, Choreography, CI Code 
+ - [Jordan Kruguer](https://github.com/jlkruguer) - CI Code
+ - [Maximilian Mueller] - Sonification Code
 
 
 TODO:
