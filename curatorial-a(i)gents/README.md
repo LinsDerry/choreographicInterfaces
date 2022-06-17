@@ -1,4 +1,9 @@
 ### curatorial a(i)gents Overview
+
+Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of the screen-based projects relied on the following interactions for which the CI accomplishes through gesture recognition: zoom in/out, scroll up/down, advance right/left, select, span, switch hands, and refresh (see image below). Instructions for how to setup and run this project follow in the next section, as well as more info. for how to adapt the code for your own project.
+
+![Interactive Gestures](/curatorial-a(i)gents/gestures.jpeg)
+
 #### This repository contains code related to development of the choreographic interface concept in relation to Metalab @ Harvard's curatorial a(i)gents project at the Harvard Art Museum's Lighbox Gallery during Spring 2022. 
 
 #### The curatorial a(i)gents (CI) projects made use of an advanced refactor of Version 2.0 of the choregraphic intefrace making use of a new choreographic interface module catered to the CI pose sets and interaction needs. 
