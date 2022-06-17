@@ -3,15 +3,11 @@
 The choreographic interfaces repo contains code for installing and running diferrent versions and applications (related projects and installations) of the choreographic interface (CI) on Mac or Windows OS (currently configured for Mac). 
 
 **Repo Contents**
- - **code-archive**
- - **ci-utils**
- - **curatorial-a(i)gents**
- - **data-sensorium**
+ - **code-archive** - the code archive contains past iterations and prototypes of CI.
+ - **ci-utils** - ci utils contains utility code, specifically several google colabs used to generate pose classes and classifiers that are necessary as inputs to the current working version of CI.
+ - **curatorial-a(i)gents** - installation scripts and CI code for the Curatorial A(i)gents project, an exhibition curated by metaLAB (at) Harvard.
+ - **data-sensorium** - installation scripts and CI code for Data Sensorium, a performance piece developed for the Harvard Art Labs (@Lins maybe add a better description here)
 
-
-The curatorial-a(i)gents repo contains the code for installing and running the choreographic interface (CI) on a Mac or Windows OS (currently configured for Mac). Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of the screen-based projects relied on the following interactions for which the CI accomplishes through gesture recognition: zoom in/out, scroll up/down, advance right/left, select, span, switch hands, and refresh (see image below). Instructions for how to setup and run this project follow in the next section, as well as more info. for how to adapt the code for your own project.
-
-![Interactive Gestures](/curatorial-a(i)gents/gestures.jpeg)
 
 The data-sensorium repo contains code for a subsequent metaLAB (at) Harvard project that utilizes the CI. It is a work-in-progress.
 
