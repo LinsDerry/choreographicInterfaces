@@ -12,7 +12,7 @@ The data-sensorium repo contains code for a subsequent metaLAB (at) Harvard proj
 
 The development-archive repo contains code for previous experiments that used TeachableMachine image model, OpenCV hand tracking, and MediaPipe holistic model to various degrees. The curatorial-a(i)gents repo contains the "best of" these experiments. 
 
-The utility repo  
+The utility repo includes CoLabs used for customizing the curatorial-a(i)gents project.  
 
 --- How to run the curatorial-a(i)gents project on your computer ---
 @Jordan add step-by-step instructions
