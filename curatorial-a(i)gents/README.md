@@ -23,6 +23,10 @@ The key elements of the CI refactor include the following files and elements:
 4) Create conda environment from .yml file using **conda env create -f CIENV.yml**
 5) cd to and run CIMain.py using **python3 CIMain.py**
 
+--- How to run the curatorial-a(i)gents project on your computer ---
+
+@Jordan add step-by-step instructions
+
 
 
 Authors: Jordan Kruguer, Lins Derry, Maximilian
