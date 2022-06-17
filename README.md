@@ -36,13 +36,8 @@ Note the CoLabs used can be found in the utility rep
  - [Maximilian Mueller] - Sonification Code
 
 
-TODO:
-add development-archive repo (maybe make this private...) and put past versions in there
-
-Add more language to readmes very step by step.
-
-licensing (Lins - use MIT license)
-
-make metalab owner (Lins - transfer ownership)
-
-utility code folder for google colab
+## TODO:
+1. Add more language to readmes very step by step.
+2. licensing (Lins - use MIT license)
+3. make metalab owner (Lins - transfer ownership)
+4. utility code folder for google colab
