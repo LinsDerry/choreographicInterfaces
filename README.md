@@ -1,5 +1,6 @@
 # choreographicInterfaces
 By Jordan Kruguer and Lins Derry, plus sonification code by Maximilian Mueller
+
 @Jordan, thoughts on how to appropriately credit Max?
 
 --- What you'll find in the choreographicInterfaces repo ---
@@ -15,6 +16,7 @@ The development-archive repo contains code for previous experiments that used Te
 The utility repo includes CoLabs used for customizing the curatorial-a(i)gents project.  
 
 --- How to run the curatorial-a(i)gents project on your computer ---
+
 @Jordan add step-by-step instructions
 
 --- How to customize the interactive gestures and code ---
