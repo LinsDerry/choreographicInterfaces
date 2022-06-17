@@ -1,9 +1,9 @@
 # choreographicInterfaces
 
 ## Authors
- - [Lins Derry](https://github.com/LinsDerry)
- - [Jordan Kruguer](https://github.com/jlkruguer)
- - 
+ - [Lins Derry](https://github.com/LinsDerry):
+ - [Jordan Kruguer](https://github.com/jlkruguer): 
+ - [Maximilian Mueller]:
 By Jordan Kruguer and Lins Derry, plus sonification code by Maximilian Mueller
 
 @Jordan, thoughts on how to appropriately credit Max?
