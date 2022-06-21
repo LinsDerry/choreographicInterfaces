@@ -1,7 +1,5 @@
 --- How to customize the interactive gestures and code ---
 
-@Jordan, is there a particular colab for 4? Do you think we need to be more explicit? Maybe high-level is enough.
-
 1. Create a training set in TeachableMachine and export the image folders for each class with labels
 2. Zip the folders together and upload them to the Pose Classification CoLab Notebook by MediaPipe
 3. In the Notebook, generate and export the “poses_csvs_out.csv” file containing the filtered image data with normalized landmark data
