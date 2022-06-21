@@ -5,13 +5,13 @@ The choreographic interfaces repo contains code for installing and running difer
 **Repo Contents**
  - **code-archive** - the code archive contains past iterations and prototypes of CI.
  - **ci-utils** - ci utils contains utility code, specifically several google colabs used to generate pose classes and classifiers that are necessary as inputs to the current working version of CI.
- - **curatorial-a(i)gents** - installation scripts and CI code for the Curatorial A(i)gents project, an exhibition curated by metaLAB (at) Harvard.
- - **data-sensorium** - installation scripts and CI code for Data Sensorium, a performance piece developed for the Harvard Art Labs (@Lins maybe add a better description here)
+ - **curatorial-a(i)gents** - installation scripts and CI code for [*Curatorial A(i)gents*](https://mlml.io/p/curatorial-aigents/), a digital exhibition curated by metaLAB (at) Harvard.
+ - **data-sensorium** - installation scripts and CI code for [*Data Sensorium*](https://mlml.io/p/data-sensorium/), a transmedia performance work that expresses data through movement and graphics.
 
 ## Authors 
  - [Lins Derry](https://github.com/LinsDerry) - Theory, Choreography, CI Code 
  - [Jordan Kruguer](https://github.com/jlkruguer) - CI Code
- - [Maximilian Mueller] - Sonification Code
+ - Maximilian Mueller - Sonification Code
 
 ## TODO:
 1. Add more language to readmes very step by step.
