@@ -8,15 +8,22 @@ Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of 
 
 #### For the exhibition, we refactored Version 2.0 (see code-archive repo), making use of a new choreographic interface module catered to the CI pose sets and interaction needs of the Curatorial A(i)gents projects.
 
-### Setup
+### Important CI Elements for the Curatorial A(i)gents Project
 
-The key elements of the CI refactor include the following files and elements:
-* CI module .py file designed specifically for the CI requirements
-* pose embedding module .py file
-* CI main .py file
-* logistic regresion .pkl file
-* sonification .py file designed for the integration of sound to interactions
+CIController.py		
+CIModule.py		
+gestures.jpeg		
+sonification-textures
+CIENV.yml		README.md		pose-set-pkl-files	sonification.py
+CIMain.py		__pycache__		poseEmbedding.py
 
+* ```CIModule.py```: module defining core elements of the CI that can instantiated in project files
+* ```poseEmbedding.py```: module defining the pose embedder for processing body landmark input
+* ```CIMain.py```: main file determining actions and interactions with CI tools to create a final interface
+* ```pose-set-pkl-files```: regression models used for classifying pose input
+* ```sonification.py```: sound interaction integrations with CI
+
+## Setup instructions 
 1) Open terminal
 2) Clone curatorial-a(i)gents repo
 3) Check that conda is installed using **conda --version**
