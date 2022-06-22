@@ -30,7 +30,7 @@ CIMain.py		__pycache__		poseEmbedding.py
 4) Create conda environment from .yml file using **conda env create -f CIENV.yml**
 5) cd to and run CIMain.py using **python3 CIMain.py**
 
-## Authors: Jordan 
+## Authors:  
 * Jordan Kruguer - Choreographic Interface Dev Lead
 * Lins Derry - Choreographic Poses Dev Lead
 * Maximilian Mueller - Sonification Dev Lead
