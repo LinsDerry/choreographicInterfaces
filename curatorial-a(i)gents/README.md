@@ -27,7 +27,7 @@ CIMain.py		__pycache__		poseEmbedding.py
 1) Open preferred terminal and cd to desired directory
 3) Clone curatorial-a(i)gents repo using ```git clone https://github.com/LinsDerry/choreographicInterfaces.git```
 4) Check that conda is installed on your machine using ```conda --version```. If not follow the [install instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html#) for your OS. 
-6) Create a conda environment from the .yml file using ```conda env create -f ./CIENV.yml``
+6) Create a conda environment from the .yml file using ```conda env create -f ./CIENV.yml```
 7) Activate the conda environment using ```TODO```
 8) To run the Curatorial A(i)gents version of the CI cd to and run CIMain.py using ```python CIMain.py```
 
