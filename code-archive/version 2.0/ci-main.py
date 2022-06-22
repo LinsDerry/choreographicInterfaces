@@ -12,10 +12,6 @@ import time
 import numpy as np
 import pyautogui, sys
 
-# Keras (UNCOMMENT IF YOU ARE USING KERAS)
-#import tensorflow.keras as tf
-# Keras
-
 # Multiprocessing
 import multiprocessing as mproc
 # Multiprocessing 
@@ -24,19 +20,19 @@ import multiprocessing as mproc
 import threading
 # Multithreading
 
+
 # Ray 
 #import psutil
 #import ray
 #num_cpus = psutil.cpu_count(logical=False)
 #ray.init(num_cpus=num_cpus)
-#ray.init()
 # Ray
+
 
 ########################################
 # POSE CLASSIFICATION HELPER FUNCTIONS #
 ########################################
 
-#@ray.remote
 def init_pose_classifier(pose_samples_folder):
     # Initialize embedder.
     pose_embedder = pose_module.FullBodyPoseEmbedder()
@@ -50,7 +46,7 @@ def init_pose_classifier(pose_samples_folder):
 
     return pose_classifier
 
-##@ray.remote
+#@ray.remote
 def classify_pose(results, pose_classifier, image):
     
     # Retrieve pose landmarks from holistic model
@@ -78,6 +74,7 @@ def classify_pose(results, pose_classifier, image):
 def pose_action(pose):
 
     if pose == 'refresh':
+        #print('REFRESH')
         pyautogui.hotkey('command', 'r') # refresh
     elif pose == 'zoomIn':
         pyautogui.hotkey('command', '+') #zoom in
@@ -85,7 +82,7 @@ def pose_action(pose):
         pyautogui.hotkey('command', '-') #zoom out
     elif pose == 'scrollUp':
         pyautogui.scroll(5)
-    elif pose == 'scrollDn': 
+    elif pose == 'scrollDn': #  Stron Confidence:
         pyautogui.scroll(-5)
      
     # Alternative zoom
@@ -96,73 +93,10 @@ def pose_action(pose):
     #    pyautogui.hotkey('command', '+')
 
 
-def init_pose_classifier_tm():
-
-    # read .txt file to get labels
-    labels_path = "./keras/labels.txt" 
-    labelsfile = open(labels_path, 'r')
-
-    # initialize classes and read in lines until there are no more
-    classes = []
-    line = labelsfile.readline()
-    while line:
-        # retrieve just class name and append to classes
-        classes.append(line.split(' ', 1)[1].rstrip())
-        line = labelsfile.readline()
-    # close label file
-    labelsfile.close()
-
-    # load the teachable machine model
-    model_path = './keras/model.h5' 
-    model = tf.models.load_model(model_path, compile=False)
-
-    return classes, model
-
-def classify_pose_tm(model, image):
-
-    data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-    frame = cv2.flip(image, 1)
-
-    frameWidth = 1280
-    frameHeight = 720
-    
-    # crop to square for use with TM model
-    margin = int(((frameWidth-frameHeight)/2))
-    square_frame = frame[0:frameHeight, margin:margin + frameHeight]
-    # resize to 224x224 for use with TM model
-    resized_img = cv2.resize(square_frame, (224, 224))
-    # convert image color to go to model
-    model_img = cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB)
-
-    # turn the image into a numpy array
-    image_array = np.asarray(model_img)
-    # normalize the image
-    normalized_image_array = (image_array.astype(np.float32) / 127.0) - 1
-    # load the image into the array
-    data[0] = normalized_image_array
-
-    # run the prediction
-    predictions = model.predict(data)
-    max_value = max(list(predictions[0]))
-    max_index = list(predictions[0]).index(max_value)
-    print(max_index)
-    pose_dict = {0:'neutral',1:'track',2:'select',3:'scrlDn',4:'scrlUp',5:'start'} # UPDATE THIS
-    
-    pose = pose_dict[max_index-1]
-    print(pose)
-    return pose
-
-def pose_action_tm(pose):
-    pass # COPY pose_action format but with tm classes @ Lins
-
-    
-
-
 
 ######################################
 # MOUSE INTERACTION HELPER FUNCTIONS #
 ######################################
-
 
 def handle_mouse(mouse_status, results, creenHeight, screenWidth): # ACTUALLY RIGHT HAND
 
@@ -237,10 +171,11 @@ def feedback():
     capX = screenWidth - newCapWidth - 5
     capY = screenHeight - newCapHeight - 33
 
-    #cv2.putText(image, f'Interactive gesture: {pose}', (25,70), cv2.FONT_HERSHEY_TRIPLEX, 1.75, red, 3) # provide feedback on current pose
+    cv2.putText(image, f'Interactive gesture: {pose}', (25,70), cv2.FONT_HERSHEY_TRIPLEX, 1.75, red, 3) # provide feedback on current pose
     cv2.imshow('Choreographic Interface', cv2.resize(image, (newCapWidth, newCapHeight)))
     cv2.setWindowProperty('Choreographic Interface', cv2.WND_PROP_TOPMOST, 1) # keeps feedback window most front
     cv2.moveWindow('Choreographic Interface', capX,capY) # relocate feedback
+
 
 
 #############
@@ -255,18 +190,15 @@ if __name__=='__main__':
     red = (58, 45, 240) # BGR for cv2 text
     white = (0, 0, 0)
 
-
     # For multiprocessing
     #pool = mproc.Pool(mproc.cpu_count())   
 
     # capture video
     cap = cv2.VideoCapture(0)
 
-    # Start pose classifier (if you are using MediaPipe)
+    # Start pose classifier
     pose_classifier = init_pose_classifier('poses_csvs_out')
-
-    # If you want to use keras model (uncomment this)
-    #classes, model = init_pose_classifier_tm()
+    print(type(pose_classifier))
 
     # set up mediapipe
     mp_drawing = mp.solutions.drawing_utils
@@ -288,6 +220,7 @@ if __name__=='__main__':
             # To improve performance, optionally mark the image as not writeable to pass by reference.
             image.flags.writeable = False
 
+
             # Process the image and detect the holistic landmarks
             results = holistic.process(image)
 
@@ -301,8 +234,8 @@ if __name__=='__main__':
             # POSE CLASSIFICATION OPTIONS --> MediaPipe #
             #############################################
             
-            # OPTION #1: DIRECT CALL (MediaPipe)
-            pose = classify_pose(results,pose_classifier,image)
+            # OPTION #1: DIRECT CALL
+            classify_pose(results,pose_classifier,image)
 
             # OPTION #2: MULTITHREADING
             #thread1 = threading.Thread(target=classify_pose, args=(pose_classifier,image,))
@@ -310,9 +243,6 @@ if __name__=='__main__':
 
             # OPTION #3: RAY (Incomplete)
             #classify_pose.remote(pose_classifier,image)
-
-            # OPTION #4: Teachable Machine
-            #classify_pose_tm(model,image)
 
             ############################################
             # MOUSE INTERACTIONS OPTIONS --> MediaPipe # 
@@ -327,13 +257,14 @@ if __name__=='__main__':
             #mouse_status = thread2.join()
 
             # OPTION #3: RAY (Incomplete)
-            #mouse_status = ray.get(handle_mouse.remote(mouse_status, results, screenHeight, screenWidth))
+
 
             # Draw landmarks
             #mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS)
             mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
             mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
+
 
             end = time.time()
             totalTime = end - start
@@ -349,6 +280,7 @@ if __name__=='__main__':
 
             if cv2.waitKey(5) & 0xFF == 27:
                 break
+
 
     
     cap.release()
