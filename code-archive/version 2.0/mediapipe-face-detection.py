@@ -42,8 +42,6 @@ with mp_facedetector.FaceDetection(min_detection_confidence=0.7) as face_detecti
 
 
 
-
-
         end = time.time()
         totalTime = end - start
 
