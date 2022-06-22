@@ -1,5 +1,7 @@
 ## How to customize the interactive gestures and code 
 
+The following steps detail how to create a new pose set from scratch that can be used as input to the choregraphc interface.
+
 1. Create a training set in TeachableMachine and export the image folders for each class with labels
 2. Zip the folders together and upload them to the Pose Classification CoLab Notebook by MediaPipe
 4. In the Notebook, generate and export the “poses_csvs_out.csv” file containing the filtered image data with normalized landmark data
