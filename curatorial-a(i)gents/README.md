@@ -4,9 +4,9 @@ Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of 
 
 ![Interactive Gestures](/curatorial-a(i)gents/gestures.jpeg)
 
-#### This repository contains code specific to the development of the choreographic interface for metaLAB (at) Harvard's Curatorial A(i)gents exhibition at the Harvard Art Museums' Lighbox Gallery (Spring 2022). 
+This repository contains code specific to the development of the choreographic interface for metaLAB (at) Harvard's Curatorial A(i)gents exhibition at the Harvard Art Museums' Lighbox Gallery (Spring 2022). 
 
-#### For the exhibition, we refactored Version 2.0 (see code-archive repo), making use of a new choreographic interface module catered to the CI pose sets and interaction needs of the Curatorial A(i)gents projects.
+For the exhibition, we refactored Version 2.0 (see code-archive repo), making use of a new choreographic interface module catered to the CI pose sets and interaction needs of the Curatorial A(i)gents projects.
 
 ## Important CI Elements for the Curatorial A(i)gents Project
 
