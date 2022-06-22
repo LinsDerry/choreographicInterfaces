@@ -13,8 +13,3 @@ The choreographic interfaces repo contains code for installing and running difer
  - [Jordan Kruguer](https://github.com/jlkruguer) - CI Code
  - Maximilian Mueller - Sonification Code
 
-## TODO:
-1. Add more language to readmes very step by step.
-2. licensing (Lins - use MIT license)
-3. make metalab owner (Lins - transfer ownership)
-4. utility code folder for google colab
