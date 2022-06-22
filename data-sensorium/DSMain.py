@@ -10,7 +10,7 @@ from shutil import which
 import cv2
 import mediapipe as mp
 from mediapipe.python.solutions import pose as mp_pose
-import pose_embedding # CI Module - Author(s): Jordan Kruguer, Lins Derry
+import poseEmbedding # CI Module - Author(s): Jordan Kruguer, Lins Derry
 import pyautogui, sys
 import numpy as np
 import time
@@ -27,7 +27,7 @@ import collections
 ## Defining import objects for landmark tracking ##
 mp_holistic = mp.solutions.holistic # for holistic landmarks
 mp_drawing = mp.solutions.drawing_utils # for drawing landmark feedback
-embed = pose_embedding.FullBodyPoseEmbedder() # for CI Module - pose embedder 
+embed = poseEmbedding.FullBodyPoseEmbedder() # for CI Module - pose embedder 
 
 ## Defining global variables - user feedback ##
 
@@ -51,7 +51,7 @@ gesture_text = ''
 ## Set maps, gesture map, set classifier (LogReg) - (For other available sets contact author(s)) ##
 set_maps = {'DS':{1:'cycle',2:'drought',3:'earthquake',4:'flood',5:'movement',6:'neutral',7:'storm',8:'volcano',9:'wildfire',10:'xTemp'}} 
 
-classifiers = {'DS':'032522_LogReg_pose_classifier_DataSensorium.pkl'} # New set with universal 'track
+classifiers = {'DS':'./pose-set-pkl-files/032522_LogReg_pose_classifier_DataSensorium.pkl'} # New set with universal 'track
 
 # Set maps for feedback
 gesture_map_text = {'drought':'drought','earthquake':'earthquake','flood':'flood','movement':'mass movement','neutral':'','storm':'storm','volcano':'volcano','wildfire':'wildfire','xTemp':'extreme temperature','cycle':''} 
