@@ -1,4 +1,4 @@
-### Curatorial A(i)gents Overview
+## Curatorial A(i)gents Overview
 
 Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of the screen-based projects relied on the following interactions for which the CI accomplishes through gesture recognition: zoom in/out, scroll up/down, advance right/left, select, span, switch hands, and refresh (see image below). Instructions for how to setup and run this project follow in the next section, as well as more info. for how to adapt the code for your own project.
 
@@ -8,7 +8,7 @@ Curatorial A(i)gents was an exhibition curated by metaLAB (at) Harvard. Half of 
 
 #### For the exhibition, we refactored Version 2.0 (see code-archive repo), making use of a new choreographic interface module catered to the CI pose sets and interaction needs of the Curatorial A(i)gents projects.
 
-### Important CI Elements for the Curatorial A(i)gents Project
+## Important CI Elements for the Curatorial A(i)gents Project
 
 CIController.py		
 CIModule.py		
@@ -30,7 +30,7 @@ CIMain.py		__pycache__		poseEmbedding.py
 4) Create conda environment from .yml file using **conda env create -f CIENV.yml**
 5) cd to and run CIMain.py using **python3 CIMain.py**
 
-Authors: Jordan Kruguer, Lins Derry, Maximilian Mueller
-* Choreographic Interface Dev Lead - Jordan Kruguer
-* Choreographic Poses Dev Lead - Lins Derry
-* Sonification Dev Lead - Maximilian Mueller
+## Authors: Jordan 
+* Jordan Kruguer - Choreographic Interface Dev Lead
+* Lins Derry - Choreographic Poses Dev Lead
+* Maximilian Mueller - Sonification Dev Lead
