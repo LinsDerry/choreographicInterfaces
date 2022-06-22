@@ -24,11 +24,11 @@ CIMain.py		__pycache__		poseEmbedding.py
 * ```sonification.py```: sound interaction integrations with CI
 
 ## Setup instructions 
-1) Open terminal
+1) Open preferred terminal
 2) Clone curatorial-a(i)gents repo
 3) Check that conda is installed using **conda --version**
 4) Create conda environment from .yml file using **conda env create -f CIENV.yml**
-5) cd to and run CIMain.py using **python3 CIMain.py**
+5) cd to and run CIMain.py using ```python CIMain.py```
 
 ## Authors:  
 * Jordan Kruguer - Choreographic Interface Dev Lead
