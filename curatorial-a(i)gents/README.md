@@ -10,13 +10,6 @@ For the exhibition, we refactored Version 2.0 (see code-archive repo), making us
 
 ## Important CI Elements for the Curatorial A(i)gents Project
 
-CIController.py		
-CIModule.py		
-gestures.jpeg		
-sonification-textures
-CIENV.yml		README.md		pose-set-pkl-files	sonification.py
-CIMain.py		__pycache__		poseEmbedding.py
-
 * ```CIModule.py```: module defining core elements of the CI that can be instantiated in project files
 * ```poseEmbedding.py```: module defining the pose embedder for processing body landmark input
 * ```CIMain.py```: main file determining actions and interactions with CI tools to create a final interface
